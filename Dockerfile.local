@@ -1,0 +1,9 @@
+FROM anapsix/alpine-java:8_jdk_unlimited
+
+# Define user home. Activator will store ivy2 and sbt caches on /code volume
+ENV _JAVA_OPTIONS='-Duser.home=/code'"
+
+WORKDIR /code
+COPY . /code
+
+CMD /code/activator -jvm-debug 5005 run
