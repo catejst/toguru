@@ -4,8 +4,6 @@
 ###  Helper methods for BASH scripts ###
 ###  ------------------------------- ###
 
-export SBT_OPTS="$SBT_OPTS -Dsbt.override.build.repos=true -Dsbt.repository.config=./proxy-sbt-repositories"
-
 realpath () {
 (
   TARGET_FILE="$1"

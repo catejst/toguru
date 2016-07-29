@@ -28,19 +28,8 @@ javaOptions in Runtime ++= Seq(
   "-Dlogger.resource=logger-config.xml"
 )
 
-buildInfoKeys ++= Seq[BuildInfoKey](
-  BuildInfoKey.action("buildTime") {
-    val dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss z", new Locale("en"))
-    val timeZone = ZoneId.of("CET") // central european time
-    ZonedDateTime.now(timeZone).format(dateTimeFormatter)
-  })
-
 lazy val root = (project in file("."))
-  .enablePlugins(SbtWeb, PlayScala, BuildInfoPlugin)
-  .settings(
-    buildInfoKeys := Seq[BuildInfoKey](version),
-    buildInfoPackage := "info"
-  )
+  .enablePlugins(SbtWeb, PlayScala)
 
 // Play provides two styles of routers, one expects its actions to be injected, the
 // other, legacy style, accesses its actions statically.
