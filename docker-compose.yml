@@ -1,0 +1,25 @@
+version: '2'
+
+services:
+  dimmer:
+    build:
+      dockerfile: Dockerfile.local
+      context: .
+    volumes:
+       - .:/code
+    ports:
+      - "9000:9000"
+      - "5005:5005"
+    stdin_open: true
+
+
+#  dimmera-app:
+#    build .
+#    volumes:
+#       - $HOME/.ivy2:/root/.ivy2
+#       - $HOME/.sbt:/root/.sbt
+#    ports:
+#      - "9000:9000"
+#    stdin_open: true
+
+

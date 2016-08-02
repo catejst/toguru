@@ -1,7 +1,5 @@
 *.class
 *.log
-logs
-.oracle_jre_usage
 
 # sbt specific
 .cache
@@ -18,5 +16,9 @@ project/plugins/project/
 .scala_dependencies
 .worksheet
 .idea
+
+Dockerfile.local
+docker-compose.yml
+
 .ivy2
 .sbt
