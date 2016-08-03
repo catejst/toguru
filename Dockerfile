@@ -22,8 +22,8 @@ RUN    cd /code/target/universal && \
 # RUN    cleanup
 
 
-#HEALTHCHECK --interval=5s --timeout=3s --retries=3 \
-#  CMD wget -nv http://localhost:9000/healthcheck || exit 1
+HEALTHCHECK --interval=5s --timeout=3s --retries=3 \
+  CMD wget -nv http://localhost:9000/healthcheck || exit 1
 
 CMD ["target/universal/bin/dimmer", "-Dlogger.resource=logger-config.xml"]
 
