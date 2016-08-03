@@ -1,4 +1,6 @@
-FROM anapsix/alpine-java:8_jdk_unlimited
+FROM java:8u92-jdk-alpine
+
+RUN apk add --update bash && rm -rf /var/cache/apk/*
 
 # Define user home. Activator will store ivy2 and sbt caches on /code volume
 ENV _JAVA_OPTIONS='-Duser.home=/code'"
