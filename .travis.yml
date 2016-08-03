@@ -23,7 +23,7 @@ script:
   - mkdir -p ~/docker; docker save as24/dimmer:$TRAVIS_BUILD_NUMBER > ~/docker/image.tar
 
 after_success:
-  - if [ "$TRAVIS_BRANCH" == "master" -a "$TRAVIS_REPO_SLUG" == "AutoScout24/dimmer" ]; then
-    docker login -e "$DOCKER_EMAIL" -u "$DOCKER_USERNAME" -p "$DOCKER_PASSWORD";
+  - if [ "$TRAVIS_BRANCH" == "master" -a "$TRAVIS_PULL_REQUEST" = "false" ]; then
+    docker login -u "$DOCKER_USERNAME" -p "$DOCKER_PASSWORD";
     docker push as24/dimmer:$TRAVIS_BUILD_NUMBER;
     fi
