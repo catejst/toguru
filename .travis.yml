@@ -3,8 +3,16 @@ sudo: required
 services:
   - docker
 
+cache:
+  directories:
+    - ~/docker
+
 script:
+  - docker version
+  - docker info
+  - if [[ -e ~/docker/image.tar ]]; then docker load -i ~/docker/image.tar; fi
   - docker build -t as24/dimmer:$TRAVIS_BUILD_NUMBER .
+  - mkdir -p ~/docker; docker save as24/dimmer:$TRAVIS_BUILD_NUMBER > ~/docker/image.tar
 
 after_success:
   - if [ "$TRAVIS_BRANCH" == "master" -a "$TRAVIS_REPO_SLUG" == "autoscout24/dimmer" ]; then
