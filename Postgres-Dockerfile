@@ -1,0 +1,2 @@
+FROM library/postgres:9.5.3
+ADD /conf/postgres/init.sql /docker-entrypoint-initdb.d/
