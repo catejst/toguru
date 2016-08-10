@@ -5,22 +5,26 @@ services:
 
 cache:
   directories:
-    - ~/docker
+    - ~/.ivy2
+    - ~/.sbt
 
 before_install:
-  - sudo sh -c 'echo "deb https://apt.dockerproject.org/repo ubuntu-precise main" > /etc/apt/sources.list.d/docker.list'
-  - sudo apt-key adv --keyserver hkp://p80.pool.sks-keyservers.net:80 --recv-keys 58118E89F3A912897C070ADBF76221572C52609D
-  - sudo apt-get update
-  - sudo apt-key update
-  - sudo apt-get -qqy -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" install docker-engine=1.12.0-0~precise
-  - docker -v
+  - docker version
+  - sudo apt-get -o Dpkg::Options::="--force-confnew" --force-yes -y install docker-engine
+  - docker version
+
+language: java
+
+jdk:
+  - oraclejdk8
+
+env:
+  - DIMMER_VERSION=$TRAVIS_BUILD_NUMBER
 
 script:
   - docker version
   - docker info
-  - if [[ -e ~/docker/image.tar ]]; then docker load -i ~/docker/image.tar; fi
-  - docker build -t as24/dimmer:$TRAVIS_BUILD_NUMBER .
-  - mkdir -p ~/docker; docker save as24/dimmer:$TRAVIS_BUILD_NUMBER > ~/docker/image.tar
+  - ./activator test docker:publishLocal
 
 after_success:
   - if [ "$TRAVIS_BRANCH" == "master" -a "$TRAVIS_PULL_REQUEST" = "false" ]; then
