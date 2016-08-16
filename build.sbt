@@ -17,13 +17,17 @@ resolvers ++= Seq(
   Resolver.jcenterRepo
 )
 
+import Library._
+import com.trueaccord.scalapb.{ScalaPbPlugin => PB}
+
 libraryDependencies ++= Seq(
   ws,
   filters,
-  "com.github.dnvriend"    %% "akka-persistence-jdbc"    % "2.6.4",
-  "org.postgresql"         %  "postgresql"               % "9.4.1209",
-  "net.logstash.logback"   %  "logstash-logback-encoder" % "4.7",
-  "org.scalatestplus.play" %% "scalatestplus-play"       % "1.5.1"    % Test
+  AkkaPersistence,
+  Postgres,
+  LogstashEncoder,
+  ScalaPbRuntime  % PB.protobufConfig,
+  ScalaTestPlus   % Test
 )
 
 
@@ -52,3 +56,19 @@ doc in Compile <<= target.map(_ / "none")
 
 // Remove toplevel directory containing service version
 topLevelDirectory := None
+
+
+// *** Protobuf settings ***
+
+// load default settings.
+PB.protobufSettings
+
+// look for .proto files in /conf/protobuf
+sourceDirectory in PB.protobufConfig := baseDirectory.value / "conf" / "protobuf"
+
+// add generated source files to Scala source path
+scalaSource in PB.protobufConfig <<= (sourceManaged in Compile)
+
+// use Protocol Buffers version 3
+version in PB.protobufConfig := "3.0.0-beta-3"
+PB.runProtoc in PB.protobufConfig := (args => com.github.os72.protocjar.Protoc.runProtoc("-v300" +: args.toArray))
