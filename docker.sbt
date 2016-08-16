@@ -13,7 +13,7 @@ dockerCmd          := ConfigurationSettings.run
 val installBash = Cmd("RUN", "apk add --update bash && rm -rf /var/cache/apk/*")
 
 val healthCheck = Cmd("HEALTHCHECK", "--interval=5s --timeout=3s --retries=3 " +
-  "CMD wget -nv http://localhost:9000/healthcheck || exit 1")
+                      "CMD wget -nv http://localhost:9000/healthcheck || exit 1")
 
 // add bash install and health check to standard Dockerfile commands
 dockerCommands := dockerCommands.value.head +:
