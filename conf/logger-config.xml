@@ -1,15 +1,14 @@
 <configuration>
 
   <appender name="logs-stdout" class="ch.qos.logback.core.ConsoleAppender">
-    <encoder class="net.logstash.logback.encoder.LogstashEncoder">
-    </encoder>
+    <encoder class="net.logstash.logback.encoder.LogstashEncoder" />
   </appender>
 
   <appender name="async-logs-stdout" class="ch.qos.logback.classic.AsyncAppender">
     <queueSize>100000</queueSize>
     <appender-ref ref="logs-stdout" />
   </appender>
-  
+
   <logger name="com.zaxxer.hikari.pool.HikariPool" level="warn" additivity="false">
     <appender-ref ref="async-logs-stdout" />
   </logger>
