@@ -3,16 +3,17 @@ version: '2'
 services:
   dimmer:
     build:
-      dockerfile: Dockerfile.local
+      dockerfile: Dockerfile.Local
       context: .
     volumes:
        - .:/code
     ports:
       - "9000:9000"
+      - "1199:1199"
       - "5005:5005"
     stdin_open: true
 
   postgres:
     build:
-      dockerfile: Postgres-Dockerfile
+      dockerfile: Dockerfile.Postgres
       context: .

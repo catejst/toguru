@@ -1,0 +1,19 @@
+FROM java:8u92-jdk-alpine
+
+RUN apk add --update bash && rm -rf /var/cache/apk/*
+
+# Define user home. Activator will store ivy2 and sbt caches on /code volume
+ENV _JAVA_OPTIONS='-Duser.home=/code'"
+
+WORKDIR /code
+COPY . /code
+
+CMD /code/activator \
+   -jvm-debug 5005 \
+   -Dcom.sun.management.jmxremote \
+   -Dcom.sun.management.jmxremote.port=1199 \
+   -Dcom.sun.management.jmxremote.rmi.port=1199 \
+   -Dcom.sun.management.jmxremote.authenticate=false \
+   -Dcom.sun.management.jmxremote.ssl=false \
+   -Djava.rmi.server.hostname=127.0.0.1 \
+   run

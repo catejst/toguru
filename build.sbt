@@ -26,8 +26,10 @@ libraryDependencies ++= Seq(
   AkkaPersistence,
   Postgres,
   LogstashEncoder,
-  ScalaPbRuntime  % PB.protobufConfig,
-  ScalaTestPlus   % Test
+  PlayMetrics,
+  DropwizardMetrics,
+  ScalaPbRuntime    % PB.protobufConfig,
+  ScalaTestPlus     % Test
 )
 
 
@@ -35,9 +37,9 @@ libraryDependencies ++= Seq(
 
 fork in run := true
 
-javaOptions in Runtime ++= ConfigurationSettings.run
+javaOptions in Runtime ++= ConfigurationSettings.Run
 
-javaOptions in Test    ++= ConfigurationSettings.test
+javaOptions in Test    ++= ConfigurationSettings.Test
 
 
 // *** Play configuration settings ***

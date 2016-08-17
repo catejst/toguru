@@ -5,9 +5,9 @@ import com.typesafe.sbt.packager.docker._
 // Using openjdk base image due to licensing issues of Oracle Java.
 dockerBaseImage    := "java:openjdk-8-jre-alpine"
 
-dockerExposedPorts := Seq(9000)
+dockerExposedPorts := Seq(9000, ConfigurationSettings.JmxPort)
 
-dockerCmd          := ConfigurationSettings.run
+dockerCmd          := ConfigurationSettings.Run
 
 // installing Bash for native packager run script
 val installBash = Cmd("RUN", "apk add --update bash && rm -rf /var/cache/apk/*")
