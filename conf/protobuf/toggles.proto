@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+import "scalapb/scalapb.proto";
+
+package dimmer;
+
+message ToggleCreated {
+    option (scalapb.message).extends = "dimmer.toggles.ToggleEvent";
+    string name = 1;
+    string description = 2;
+    map<string, string> tags = 3;
+}
