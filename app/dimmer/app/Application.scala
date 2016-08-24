@@ -8,6 +8,7 @@ import akka.util.Timeout
 import dimmer.app.HealthActor.{GetHealth, HealthStatus}
 import play.api.mvc._
 
+import scala.concurrent.Future
 import scala.concurrent.duration._
 
 class Application @Inject() (@Named("health") healthActor: ActorRef) extends Controller {
@@ -16,19 +17,22 @@ class Application @Inject() (@Named("health") healthActor: ActorRef) extends Con
     Ok("Your new application is ready.")
   }
 
-  def healthCheck = Action.async {
+  def healthCheck = Action.async { handleHealthRequest(Ok) }
 
+  def readyCheck  = Action.async {  handleHealthRequest() }
+
+  private def handleHealthRequest(databaseUnavailableStatus: Status = InternalServerError): Future[Result] = {
     import play.api.libs.concurrent.Execution.Implicits._
 
     implicit val timeout = Timeout(500.milliseconds)
     (healthActor ? GetHealth())
       .mapTo[HealthStatus]
-      .map(toResponse)
+      .map(toResponse(databaseUnavailableStatus))
       .recover(serverError)
   }
 
-  private def toResponse(health: HealthStatus): Result =
-    if (health.isDatabaseHealthy) Ok("Ok") else InternalServerError("Database not available")
+  private def toResponse(databaseUnavailableStatus: Status)(health: HealthStatus): Result =
+    if (health.isDatabaseHealthy) Ok("Ok") else databaseUnavailableStatus("Database not available")
 
   private val serverError: PartialFunction[Throwable, Result] = { case _ => InternalServerError("Service is not available") }
 
