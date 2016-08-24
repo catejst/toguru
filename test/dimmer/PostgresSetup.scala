@@ -10,38 +10,36 @@ import scala.sys.process.{Process, ProcessIO}
 import scala.util.Random
 
 
-trait DbSetup {
+trait PostgresSetup {
 
   def log(message: String): Unit
   def config: Config
 
   final def waitForPostgres(): Unit = {
     import scala.concurrent.ExecutionContext.Implicits.global
-    val future = Future {
-      while(true) {
-        var maybeConn: Option[Connection] = None
-        try {
-          val url = config.getString("slick.db.url")
-          val conn = DriverManager.getConnection(url)
-          maybeConn = Some(conn)
 
+    def waitForConnection(): Unit = {
+      try {
+        val url = config.getString("slick.db.url")
+        val conn = DriverManager.getConnection(url)
+        try {
           val query = config.getString("slick.db.connectionTestQuery")
           val statement = conn.createStatement()
           val rs = statement.executeQuery(query)
           rs.next()
-
-          log("Postgres ready")
-          break
-        } catch {
-          case _ : IOException =>
-          case _ : SQLException =>
         } finally {
-          maybeConn.foreach(c => c.close())
+          conn.close()
         }
-        Thread.sleep(500)
+      } catch {
+        case _ : IOException  =>
+          Thread.sleep(500)
+          waitForConnection()
+        case _ : SQLException =>
+          Thread.sleep(500)
+          waitForConnection()
       }
     }
-    Await.result(future, 20.seconds)
+    Await.result(Future { waitForConnection() }, 30.seconds)
   }
 
 
