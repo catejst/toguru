@@ -7,4 +7,6 @@ GET        /                             @dimmer.app.Application.index
 
 GET        /healthcheck                  @dimmer.app.Application.healthCheck
 
+GET        /readycheck                   @dimmer.app.Application.readyCheck
+
 POST       /toggle                       @dimmer.toggles.ToggleController.create
