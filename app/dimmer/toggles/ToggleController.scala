@@ -65,21 +65,24 @@ class ToggleController(config: Config, factory: ToggleActorProvider) extends Con
 
   val toResponse: PartialFunction[Any, Result] = {
     case CreateSucceeded(toggleId) =>
+      publisher.event("create-toggle-success", "toggle-id" -> toggleId)
       Ok(Json.obj("status" -> "Ok", "id" -> toggleId))
 
-    case ToggleAlreadyExists(id) =>
+    case ToggleAlreadyExists(toggleId) =>
+      publisher.event("create-toggle-conflict", "toggle-id" -> toggleId)
       Conflict(Json.obj(
         "status" -> "Conflict",
-        "reason" -> s"A toggle with id $id already exists",
+        "reason" -> s"A toggle with id $toggleId already exists",
         "remedy" -> "Choose different toggle name"))
 
-    case CreateFailed(cause) =>
-      InternalServerError(Json.obj("status" -> "Internal Server Error", "reason" -> cause))
+    case CreateFailed(toggleId, cause) =>
+      publisher.event("create-toggle-failed", cause, "toggle-id" -> toggleId)
+      InternalServerError(Json.obj("status" -> "Internal Server Error", "reason" -> cause.getMessage))
   }
 
   def serverError(name: String): PartialFunction[Throwable, Result] = {
     case t: Throwable =>
-      publisher.event("create-toggle-failure", t, "toggle-name" -> name)
+      publisher.event("create-toggle-failed", t, "toggle-id" -> ToggleActor.toId(name))
       InternalServerError(Json.obj(
         "status" -> "Internal Server Error",
         "reason" -> "An internal error occurred",
