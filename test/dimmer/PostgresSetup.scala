@@ -79,7 +79,8 @@ trait PostgresSetup {
         Process(s"docker stop ${runningContainers.mkString(" ")}").!!
       }
 
-      val exitValue = run("Postgres", s"docker run --name $postgresName -d -p 5432:5432 $postgresDockerImage")
+      val port = config.getString("slick.db.port")
+      val exitValue = run("Postgres", s"docker run --name $postgresName -d -p $port:5432 $postgresDockerImage")
 
       if(exitValue != 0)
         throw new RuntimeException("Starting docker container failed")

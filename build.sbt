@@ -38,7 +38,10 @@ libraryDependencies ++= Seq(
 
 fork in run := true
 
-envVars in Test += "POSTGRES_HOST" -> "127.0.0.1"
+envVars in Test ++= Map(
+  "POSTGRES_HOST" -> "127.0.0.1",
+  "POSTGRES_PORT" -> ConfigurationSettings.freePort.toString
+)
 
 javaOptions in Runtime ++= ConfigurationSettings.Dev
 

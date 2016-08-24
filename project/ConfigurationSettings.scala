@@ -1,4 +1,13 @@
+import java.net.ServerSocket
+
 object ConfigurationSettings {
+
+  def freePort: Int = {
+    val socket = new ServerSocket(0)
+    val port = socket.getLocalPort
+    socket.close()
+    port
+  }
 
   val JmxPort = 1199
 
