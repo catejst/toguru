@@ -29,13 +29,16 @@ libraryDependencies ++= Seq(
   PlayMetrics,
   DropwizardMetrics,
   ScalaPbRuntime    % PB.protobufConfig,
-  ScalaTestPlus     % Test
+  ScalaTestPlus     % Test,
+  Mockito           % Test
 )
 
 
 // *** Runtime configurations ***
 
 fork in run := true
+
+envVars in Test += "POSTGRES_HOST" -> "127.0.0.1"
 
 javaOptions in Runtime ++= ConfigurationSettings.Run
 
@@ -72,5 +75,5 @@ sourceDirectory in PB.protobufConfig := baseDirectory.value / "conf" / "protobuf
 scalaSource in PB.protobufConfig <<= (sourceManaged in Compile)
 
 // use Protocol Buffers version 3
-version in PB.protobufConfig := "3.0.0-beta-3"
+version in PB.protobufConfig := "3.0.0"
 PB.runProtoc in PB.protobufConfig := (args => com.github.os72.protocjar.Protoc.runProtoc("-v300" +: args.toArray))

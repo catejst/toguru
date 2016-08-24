@@ -1,22 +1,21 @@
-package dimmer
+package dimmer.app
 
 import javax.inject.Singleton
 
 import com.google.inject.{AbstractModule, Provides}
-import dimmer.app.{HealthActor, JmxReportingSetup}
 import play.api.libs.concurrent.AkkaGuiceSupport
 import slick.backend.DatabaseConfig
-import slick.driver.PostgresDriver
+import slick.driver.JdbcDriver
 
 class DimmerModule extends AbstractModule with AkkaGuiceSupport {
 
   def configure() = {
-    bind(classOf[Configuration]).asEagerSingleton()
     bind(classOf[JmxReportingSetup]).asEagerSingleton()
+    bind(classOf[Config]).to(classOf[Configuration]).asEagerSingleton()
 
     bindActor[HealthActor]("health")
   }
 
   @Provides @Singleton
-  def dbConfig: DatabaseConfig[PostgresDriver]= DatabaseConfig.forConfig("slick")
+  def dbConfig: DatabaseConfig[JdbcDriver] = DatabaseConfig.forConfig("slick")
 }
