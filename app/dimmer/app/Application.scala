@@ -31,4 +31,5 @@ class Application @Inject() (@Named("health") healthActor: ActorRef) extends Con
     if (health.isDatabaseHealthy) Ok("Ok") else InternalServerError("Database not available")
 
   private val serverError: PartialFunction[Throwable, Result] = { case _ => InternalServerError("Service is not available") }
+
 }

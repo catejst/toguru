@@ -1,5 +1,5 @@
 CREATE DATABASE dimmer;
--- USE dimmer;
+\c dimmer
 -- DROP TABLE IF EXISTS public.journal;
 
 CREATE TABLE IF NOT EXISTS public.journal (

@@ -1,4 +1,13 @@
+import java.net.ServerSocket
+
 object ConfigurationSettings {
+
+  def freePort: Int = {
+    val socket = new ServerSocket(0)
+    val port = socket.getLocalPort
+    socket.close()
+    port
+  }
 
   val JmxPort = 1199
 
@@ -13,6 +22,7 @@ object ConfigurationSettings {
   )
 
   val Run  = Seq("-Dconfig.resource=application.conf", "-Dlogger.resource=logger-config.xml") ++ JmxOptions
-  val Test = Seq("-Dconfig.resource=test.conf",        "-Dlogger.resource=logger-config.xml") ++ JmxOptions
+  val Dev  = Seq("-Dconfig.resource=application.conf", "-Dlogger.resource=dev-logger-config.xml") ++ JmxOptions
+  val Test = Seq("-Dconfig.resource=test.conf",        "-Dlogger.resource=dev-logger-config.xml") ++ JmxOptions
 
 }

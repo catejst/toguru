@@ -7,7 +7,7 @@ import akka.actor.Actor
 import akka.pattern.after
 import dimmer.app.HealthActor.{CheckHealth, GetHealth, HealthStatus}
 import slick.backend.DatabaseConfig
-import slick.driver.PostgresDriver
+import slick.driver.JdbcDriver
 
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
@@ -20,7 +20,7 @@ object HealthActor {
 }
 
 
-class HealthActor @Inject() (dbConfig: DatabaseConfig[PostgresDriver]) extends Actor  {
+class HealthActor @Inject() (dbConfig: DatabaseConfig[JdbcDriver]) extends Actor  {
 
   var databaseHealthy: Boolean = false
 
