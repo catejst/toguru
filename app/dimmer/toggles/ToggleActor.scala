@@ -13,7 +13,7 @@ object ToggleActor {
 
   case class CreateSucceeded(id: String)
 
-  case class CreateFailed(cause: String)
+  case class CreateFailed(id: String, cause: Throwable)
 
   case class ToggleAlreadyExists(id: String)
 
@@ -57,7 +57,6 @@ class ToggleActor(toggleId: String) extends PersistentActor with EventPublishing
   }
 
   override protected def onPersistFailure(cause: Throwable, event: Any, seqNr: Long): Unit = {
-    sender ! CreateFailed(cause.getMessage)
-    publisher.event("toggle-event-persist-failed",cause,"event_type" -> event.getClass.getSimpleName)
+    sender ! CreateFailed(toggleId, cause)
   }
 }
