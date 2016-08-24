@@ -40,7 +40,7 @@ fork in run := true
 
 envVars in Test += "POSTGRES_HOST" -> "127.0.0.1"
 
-javaOptions in Runtime ++= ConfigurationSettings.Run
+javaOptions in Runtime ++= ConfigurationSettings.Dev
 
 javaOptions in Test    ++= ConfigurationSettings.Test
 
