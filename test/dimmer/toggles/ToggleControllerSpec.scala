@@ -13,7 +13,7 @@ import play.api.test.Helpers._
 import scala.concurrent.Future
 import scala.concurrent.duration._
 import com.typesafe.config.{Config => TypesafeConfig}
-import dimmer.toggles.ToggleActor.CreateSucceeded
+import dimmer.toggles.ToggleActor.{CreateSucceeded, CreateToggleCommand}
 
 class ToggleControllerSpec extends PlaySpec with Results with MockitoSugar {
 
@@ -34,24 +34,10 @@ class ToggleControllerSpec extends PlaySpec with Results with MockitoSugar {
     new ToggleController(config, factory)
   }
 
-  "create fails with bad request when json is invalid" in {
-
-    val controller = createController()
-    val request = FakeRequest().withBody(Json.obj("hi" -> "!"))
-
-    val result: Future[Result] = controller.create().apply(request)
-
-    val bodyJson: JsValue = contentAsJson(result)
-    status(result) mustBe 400
-    (bodyJson \ "status").asOpt[String] mustBe Some("Bad Request")
-    (bodyJson \ "sample").toOption mustBe a[Some[_]]
-
-  }
-
   "returns ok when json is valid" in {
 
     val controller = createController()
-    val request = FakeRequest().withBody(Json.toJson(controller.sampleCreateToggle)(controller.createToggleWrites))
+    val request = FakeRequest().withBody(CreateToggleCommand("toggle", "description", Map.empty))
 
     val result: Future[Result] = controller.create().apply(request)
 
@@ -63,13 +49,13 @@ class ToggleControllerSpec extends PlaySpec with Results with MockitoSugar {
   "returns 500 when actor request times out" in {
 
     val controller = createController(Props[MockLazyActor])
-    val request = FakeRequest().withBody(Json.toJson(controller.sampleCreateToggle)(controller.createToggleWrites))
+    val request = FakeRequest().withBody(CreateToggleCommand("toggle", "description", Map.empty))
 
     val result: Future[Result] = controller.create().apply(request)
 
     val bodyJson: JsValue = contentAsJson(result)
     status(result) mustBe 500
-    (bodyJson \ "status").asOpt[String] mustBe Some("Internal Server Error")
+    (bodyJson \ "status").asOpt[String] mustBe Some("Internal server error")
     (bodyJson \ "reason").asOpt[String] mustBe Some("An internal error occurred")
   }
 }

@@ -2,16 +2,14 @@ package dimmer.toggles
 
 import javax.inject.Inject
 
-import akka.actor.{ActorRef, ActorSystem, Props}
+import akka.actor.{ActorRef, ActorSystem}
 import akka.pattern.ask
 import akka.util.Timeout
 import RestUtils._
 import dimmer.app.Config
-import play.api.http.ContentTypes
 import play.api.libs.json._
 import play.api.mvc._
 
-import scala.concurrent.Future
 import ToggleActor._
 import dimmer.logging.EventPublishing
 
@@ -27,40 +25,21 @@ class ToggleController(config: Config, factory: ToggleActorProvider) extends Con
 
   implicit val createToggleReads = Json.reads[CreateToggleCommand]
   implicit val createToggleWrites = Json.writes[CreateToggleCommand]
+  implicit val timeout = Timeout(config.actorTimeout)
 
-  val sampleCreateToggle = CreateToggleCommand("toggle name", "toggle description", Map("team" -> "Shared Services"))
+  val sampleCreateToggleJson =
+    Json.toJson(CreateToggleCommand("toggle name", "toggle description", Map("team" -> "Shared Services")))
 
-  def create = ActionWithJson.async(parse.tolerantJson) { request =>
-    request.body.validate[CreateToggleCommand] match {
-      case e: JsError        => invalidRequestBody(e)
-      case JsSuccess(cmd, _) => handleCreate(cmd)
-    }
-  }
-
-  def handleCreate(cmd: CreateToggleCommand): Future[Result] = {
-    val toggleActor = factory.create(cmd.name)
-    implicit val timeout = Timeout(config.actorTimeout)
+  def create = ActionWithJson.async(json[CreateToggleCommand](sampleCreateToggleJson)) { request =>
+    val command = request.body
+    val toggleActor = factory.create(command.name)
     import play.api.libs.concurrent.Execution.Implicits._
-    (toggleActor ? cmd)
+    (toggleActor ? command)
       .map(toResponse)
-      .recover(serverError(cmd.name))
+      .recover(serverError(command.name))
       .andThen {
         case _ => factory.stop(toggleActor)
       }
-  }
-
-  def invalidRequestBody(error: JsError): Future[Result] = {
-    val errorsObj = JsObject(error.errors.flatMap {
-      case (path, errors) => errors.map(e => path.toString() -> JsString(e.message))
-    })
-
-    Future.successful(BadRequest(Json.prettyPrint(Json.obj(
-      "status" -> "Bad Request",
-      "reason" -> "Provided Body not valid",
-      "remedy" -> "Provide valid Body of the form given in the sample field",
-      "sample" -> Json.toJson(sampleCreateToggle),
-      "errors" -> errorsObj
-    ))).as(ContentTypes.JSON))
   }
 
   val toResponse: PartialFunction[Any, Result] = {
@@ -84,7 +63,7 @@ class ToggleController(config: Config, factory: ToggleActorProvider) extends Con
     case t: Throwable =>
       publisher.event("create-toggle-failed", t, "toggle-id" -> ToggleActor.toId(name))
       InternalServerError(Json.obj(
-        "status" -> "Internal Server Error",
+        "status" -> "Internal server error",
         "reason" -> "An internal error occurred",
         "remedy" -> "Try again later or contact service owning team"
       ))
