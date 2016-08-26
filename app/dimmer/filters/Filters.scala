@@ -1,10 +1,32 @@
 package dimmer.filters
 
 import javax.inject.Inject
-import play.api.http.HttpFilters
-import play.filters.gzip.GzipFilter
-import play.filters.headers.SecurityHeadersFilter
 
-class Filters @Inject()(gzip: GzipFilter) extends HttpFilters {
-  val filters = Seq(gzip)
+import akka.stream.Materializer
+import com.kenshoo.play.metrics.Metrics
+import play.api.http.HttpFilters
+import play.api.mvc._
+import play.filters.gzip.GzipFilter
+
+import scala.concurrent.{ExecutionContext, Future}
+import scala.util.{Failure, Success}
+
+class Filters @Inject()(gzip: GzipFilter, counter: ErrorCounterFilter) extends HttpFilters {
+  val filters = Seq(gzip, counter)
+}
+
+class ErrorCounterFilter @Inject() (implicit val mat: Materializer, ec: ExecutionContext, metrics: Metrics) extends Filter {
+
+  val serverErrors = metrics.defaultRegistry.counter("serverErrors")
+  val clientErrors = metrics.defaultRegistry.counter("clientErrors")
+
+  def apply(nextFilter: RequestHeader => Future[Result])(requestHeader: RequestHeader): Future[Result] =
+    nextFilter(requestHeader).andThen {
+      case Failure(_)      => serverErrors.inc()
+      case Success(result) => result.header.status match {
+        case s if s >= 500 => serverErrors.inc()
+        case s if s >= 400 => clientErrors.inc()
+        case _             => ()
+      }
+    }
 }
