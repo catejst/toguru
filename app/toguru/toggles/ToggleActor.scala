@@ -1,7 +1,7 @@
-package dimmer.toggles
+package toguru.toggles
 
 import akka.persistence.PersistentActor
-import dimmer.logging.EventPublishing
+import toguru.logging.EventPublishing
 import akka.actor.{ActorRef, ActorSystem, Props}
 
 import ToggleActor._

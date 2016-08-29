@@ -1,4 +1,4 @@
-package dimmer.toggles
+package toguru.toggles
 
 import play.api.http.{HeaderNames, MimeTypes}
 import play.api.libs.json._

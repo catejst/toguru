@@ -19,7 +19,7 @@ jdk:
   - oraclejdk8
 
 env:
-  - DIMMER_VERSION=$TRAVIS_BUILD_NUMBER
+  - TOGURU_VERSION=$TRAVIS_BUILD_NUMBER
 
 script:
   - docker version
@@ -29,5 +29,5 @@ script:
 after_success:
   - if [ "$TRAVIS_BRANCH" == "master" -a "$TRAVIS_PULL_REQUEST" = "false" ]; then
     docker login -u "$DOCKER_USERNAME" -p "$DOCKER_PASSWORD";
-    docker push as24/dimmer:$TRAVIS_BUILD_NUMBER;
+    docker push as24/toguru:$TRAVIS_BUILD_NUMBER;
     fi

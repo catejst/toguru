@@ -1,8 +1,8 @@
-package dimmer.toggles
+package toguru.toggles
 
-import dimmer.PostgresSetup
-import dimmer.app.Config
-import dimmer.toggles.ToggleActor.GetToggle
+import toguru.PostgresSetup
+import toguru.app.Config
+import toguru.toggles.ToggleActor.GetToggle
 import play.api.test.Helpers._
 import org.scalatest.BeforeAndAfterAll
 import org.scalatestplus.play.{OneServerPerSuite, PlaySpec}

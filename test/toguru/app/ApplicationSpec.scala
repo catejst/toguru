@@ -1,7 +1,7 @@
-package dimmer.app
+package toguru.app
 
 import akka.actor.{Props, ActorSystem, Actor}
-import dimmer.app.HealthActor.HealthStatus
+import toguru.app.HealthActor.HealthStatus
 import org.scalatestplus.play._
 
 import play.api.mvc._

@@ -1,4 +1,4 @@
-package dimmer.toggles
+package toguru.toggles
 
 import javax.inject.Inject
 
@@ -6,12 +6,12 @@ import akka.actor.{ActorRef, ActorSystem}
 import akka.pattern.ask
 import akka.util.Timeout
 import RestUtils._
-import dimmer.app.Config
+import toguru.app.Config
 import play.api.libs.json._
 import play.api.mvc._
 
 import ToggleActor._
-import dimmer.logging.EventPublishing
+import toguru.logging.EventPublishing
 
 trait ToggleActorProvider {
   def create(name: String): ActorRef

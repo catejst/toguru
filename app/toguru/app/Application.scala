@@ -1,11 +1,11 @@
-package dimmer.app
+package toguru.app
 
 import javax.inject.{Inject, Named}
 
 import akka.actor.ActorRef
 import akka.pattern.ask
 import akka.util.Timeout
-import dimmer.app.HealthActor.{GetHealth, HealthStatus}
+import toguru.app.HealthActor.{GetHealth, HealthStatus}
 import play.api.mvc._
 
 import scala.concurrent.Future

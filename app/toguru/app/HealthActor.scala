@@ -1,11 +1,11 @@
-package dimmer.app
+package toguru.app
 
 import java.util.concurrent.TimeoutException
 import javax.inject.Inject
 
 import akka.actor.Actor
 import akka.pattern.after
-import dimmer.app.HealthActor.{CheckHealth, GetHealth, HealthStatus}
+import toguru.app.HealthActor.{CheckHealth, GetHealth, HealthStatus}
 import slick.backend.DatabaseConfig
 import slick.driver.JdbcDriver
 

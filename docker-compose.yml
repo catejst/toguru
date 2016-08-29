@@ -1,7 +1,7 @@
 version: '2'
 
 services:
-  dimmer:
+  toguru:
     build:
       dockerfile: Dockerfile.Local
       context: .

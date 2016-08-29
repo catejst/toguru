@@ -1,4 +1,4 @@
-package dimmer.toggles
+package toguru.toggles
 
 import akka.persistence.journal.{Tagged, WriteEventAdapter}
 import akka.serialization.SerializerWithStringManifest

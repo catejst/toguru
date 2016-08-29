@@ -2,10 +2,10 @@ syntax = "proto3";
 
 import "scalapb/scalapb.proto";
 
-package dimmer;
+package toguru;
 
 message ToggleCreated {
-    option (scalapb.message).extends = "dimmer.toggles.ToggleEvent";
+    option (scalapb.message).extends = "toguru.toggles.ToggleEvent";
     string name = 1;
     string description = 2;
     map<string, string> tags = 3;
