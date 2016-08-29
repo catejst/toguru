@@ -1,4 +1,4 @@
-package dimmer.filters
+package toguru.filters
 
 import javax.inject.Inject
 

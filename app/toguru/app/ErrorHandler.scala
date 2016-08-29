@@ -1,8 +1,8 @@
-package dimmer.app
+package toguru.app
 
 import javax.inject._
 
-import dimmer.logging.EventPublishing
+import toguru.logging.EventPublishing
 import play.api.{Environment, OptionalSourceMapper, UsefulException, Configuration => PlayConfiguration}
 import play.api.mvc._
 import play.api.routing.Router

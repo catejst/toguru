@@ -1,5 +1,5 @@
-CREATE DATABASE dimmer;
-\c dimmer
+CREATE DATABASE toguru;
+\c toguru
 -- DROP TABLE IF EXISTS public.journal;
 
 CREATE TABLE IF NOT EXISTS public.journal (

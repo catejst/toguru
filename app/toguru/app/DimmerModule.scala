@@ -1,4 +1,4 @@
-package dimmer.app
+package toguru.app
 
 import javax.inject.Singleton
 
@@ -7,7 +7,7 @@ import play.api.libs.concurrent.AkkaGuiceSupport
 import slick.backend.DatabaseConfig
 import slick.driver.JdbcDriver
 
-class DimmerModule extends AbstractModule with AkkaGuiceSupport {
+class ToguruModule extends AbstractModule with AkkaGuiceSupport {
 
   def configure() = {
     bind(classOf[JmxReportingSetup]).asEagerSingleton()

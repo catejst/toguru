@@ -1,4 +1,4 @@
-package dimmer.logging
+package toguru.logging
 
 import net.logstash.logback.marker.LogstashMarker
 import net.logstash.logback.marker.Markers.appendEntries

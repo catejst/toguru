@@ -1,4 +1,4 @@
-package dimmer.app
+package toguru.app
 
 import java.util.concurrent.TimeUnit
 import javax.inject.{Inject, Singleton}

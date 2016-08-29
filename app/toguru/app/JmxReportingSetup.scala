@@ -1,4 +1,4 @@
-package dimmer.app
+package toguru.app
 
 import javax.inject.Inject
 

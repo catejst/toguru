@@ -3,10 +3,10 @@
 # ~~~~
 
 # Home page
-GET        /                             @dimmer.app.Application.index
+GET        /                             @toguru.app.Application.index
 
-GET        /healthcheck                  @dimmer.app.Application.healthCheck
+GET        /healthcheck                  @toguru.app.Application.healthCheck
 
-GET        /readycheck                   @dimmer.app.Application.readyCheck
+GET        /readycheck                   @toguru.app.Application.readyCheck
 
-POST       /toggle                       @dimmer.toggles.ToggleController.create
+POST       /toggle                       @toguru.toggles.ToggleController.create

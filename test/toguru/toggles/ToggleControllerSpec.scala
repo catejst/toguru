@@ -1,8 +1,8 @@
-package dimmer.toggles
+package toguru.toggles
 
 import akka.actor.Actor.Receive
 import akka.actor.{Actor, ActorRef, ActorSystem, Props}
-import dimmer.app.Config
+import toguru.app.Config
 import org.scalatest.mock.MockitoSugar
 import org.scalatestplus.play.PlaySpec
 import play.api.libs.json.{JsValue, Json}
@@ -13,7 +13,7 @@ import play.api.test.Helpers._
 import scala.concurrent.Future
 import scala.concurrent.duration._
 import com.typesafe.config.{Config => TypesafeConfig}
-import dimmer.toggles.ToggleActor.{CreateSucceeded, CreateToggleCommand}
+import toguru.toggles.ToggleActor.{CreateSucceeded, CreateToggleCommand}
 
 class ToggleControllerSpec extends PlaySpec with Results with MockitoSugar {
 

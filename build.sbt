@@ -6,8 +6,8 @@ lazy val root = (project in file(".")).enablePlugins(SbtWeb, PlayScala, DockerPl
 // *** Coordinates ***
 
 organization := "com.autoscout24"
-name         := "dimmer"
-version      := Option(System.getenv("DIMMER_VERSION")).getOrElse("local")
+name         := "toguru"
+version      := Option(System.getenv("TOGURU_VERSION")).getOrElse("local")
 
 
 // *** Libraries ***

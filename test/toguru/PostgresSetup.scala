@@ -1,4 +1,4 @@
-package dimmer
+package toguru
 
 import java.io.IOException
 import java.sql.{SQLException, Connection, DriverManager}
