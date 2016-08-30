@@ -9,63 +9,81 @@ import RestUtils._
 import toguru.app.Config
 import play.api.libs.json._
 import play.api.mvc._
-
 import ToggleActor._
 import toguru.logging.EventPublishing
 
-trait ToggleActorProvider {
-  def create(name: String): ActorRef
-  def stop(ref: ActorRef)
-}
+import scala.concurrent.{ExecutionContext, Future}
 
-class ToggleController(config: Config, factory: ToggleActorProvider) extends Controller with EventPublishing {
+class ToggleController(config: Config, provider: ToggleActorProvider) extends Controller with EventPublishing {
+
+  type ResponseMapper = PartialFunction[Any, Result]
+
+  type FailureHandler = PartialFunction[Throwable, Result]
 
   @Inject
-  def this(system: ActorSystem, config: Config) = this(config, provider(system))
+  def this(system: ActorSystem, config: Config) = this(config, ToggleActor.provider(system))
 
   implicit val createToggleReads = Json.reads[CreateToggleCommand]
   implicit val createToggleWrites = Json.writes[CreateToggleCommand]
+  implicit val toggleWrites = Json.writes[Toggle]
   implicit val timeout = Timeout(config.actorTimeout)
 
-  val sampleCreateToggleJson =
-    Json.toJson(CreateToggleCommand("toggle name", "toggle description", Map("team" -> "Shared Services")))
+  val sampleCreateToggle = CreateToggleCommand("toggle name", "toggle description", Map("team" -> "Shared Services"))
 
-  def create = ActionWithJson.async(json[CreateToggleCommand](sampleCreateToggleJson)) { request =>
-    val command = request.body
-    val toggleActor = factory.create(command.name)
+  def get(toggleId: String) = ActionWithJson.async { request =>
     import play.api.libs.concurrent.Execution.Implicits._
-    (toggleActor ? command)
-      .map(toResponse)
-      .recover(serverError(command.name))
-      .andThen {
-        case _ => factory.stop(toggleActor)
+
+    withActor(toggleId, "get-toggle") { toggleActor =>
+      (toggleActor ? GetToggle).map {
+        case Some(toggle: Toggle) => Ok(Json.toJson(toggle))
+        case None => NotFound(errorJson(
+          "Not found",
+          s"A toggle with id '$toggleId' does not exist",
+          "Provide an existing toggle id"))
+        case r => throw new RuntimeException(s"ToggleActor replied with $r")
       }
+    }
   }
 
-  val toResponse: PartialFunction[Any, Result] = {
-    case CreateSucceeded(toggleId) =>
-      publisher.event("create-toggle-success", "toggle-id" -> toggleId)
-      Ok(Json.obj("status" -> "Ok", "id" -> toggleId))
+  def create = ActionWithJson.async(json(sampleCreateToggle)) { request =>
+    import play.api.libs.concurrent.Execution.Implicits._
+    val command = request.body
+    val id = ToggleActor.toId(command.name)
 
-    case ToggleAlreadyExists(toggleId) =>
-      publisher.event("create-toggle-conflict", "toggle-id" -> toggleId)
-      Conflict(Json.obj(
-        "status" -> "Conflict",
-        "reason" -> s"A toggle with id $toggleId already exists",
-        "remedy" -> "Choose different toggle name"))
+    withActor(id, "create-toggle") { toggleActor =>
+      (toggleActor ? command).map {
+        case CreateSucceeded(toggleId) =>
+          publisher.event("create-toggle-success", "toggle-id" -> toggleId)
+          Ok(Json.obj("status" -> "Ok", "id" -> toggleId))
 
-    case CreateFailed(toggleId, cause) =>
-      publisher.event("create-toggle-failed", cause, "toggle-id" -> toggleId)
-      InternalServerError(Json.obj("status" -> "Internal Server Error", "reason" -> cause.getMessage))
+        case ToggleAlreadyExists(toggleId) =>
+          publisher.event("create-toggle-conflict", "toggle-id" -> toggleId)
+          Conflict(errorJson(
+            "Conflict",
+            s"A toggle with id $toggleId already exists",
+            "Choose different toggle name"))
+
+        case CreateFailed(toggleId, cause) =>
+          publisher.event("create-toggle-failed", cause, "toggle-id" -> toggleId)
+          InternalServerError(errorJson("Internal Server Error", cause.getMessage))
+      }
+    }
   }
 
-  def serverError(name: String): PartialFunction[Throwable, Result] = {
+  def withActor(toggleId: String, actionId: String)(handler: ActorRef => Future[Result])(implicit ec: ExecutionContext): Future[Result] = {
+    val toggleActor = provider.create(toggleId)
+    handler(toggleActor)
+      .recover(serverError(s"$actionId-failed", toggleId))
+      .andThen { case _ => provider.stop(toggleActor) }
+  }
+
+  def serverError(actionId: String, name: String): FailureHandler = {
     case t: Throwable =>
-      publisher.event("create-toggle-failed", t, "toggle-id" -> ToggleActor.toId(name))
-      InternalServerError(Json.obj(
-        "status" -> "Internal server error",
-        "reason" -> "An internal error occurred",
-        "remedy" -> "Try again later or contact service owning team"
+      publisher.event(actionId, t, "toggleId" -> ToggleActor.toId(name))
+      InternalServerError(errorJson(
+        "Internal server error",
+        "An internal error occurred",
+        "Try again later or contact service owning team"
       ))
   }
 }

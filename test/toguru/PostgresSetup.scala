@@ -9,7 +9,6 @@ import scala.concurrent.{Await, Future}
 import scala.sys.process.{Process, ProcessIO}
 import scala.util.Random
 
-
 trait PostgresSetup {
 
   def log(message: String): Unit
@@ -42,8 +41,6 @@ trait PostgresSetup {
     Await.result(Future { waitForConnection() }, 30.seconds)
   }
 
-
-
   var maybePostgresName:Option[String] = None
 
   def startPostgres() = {
@@ -66,7 +63,7 @@ trait PostgresSetup {
 
     import scala.concurrent.ExecutionContext.Implicits.global
     Future {
-      val buildExitValue = run("Build", s"docker build -t $postgresDockerImage -f Dockerfile.Postgres .")
+      val buildExitValue = run("Postgres build", s"docker build -t $postgresDockerImage -f Dockerfile.Postgres .")
 
       if(buildExitValue != 0)
         throw new RuntimeException("Docker build failed")
@@ -80,7 +77,7 @@ trait PostgresSetup {
       }
 
       val port = config.getString("slick.db.port")
-      val exitValue = run("Postgres", s"docker run --name $postgresName -d -p $port:5432 $postgresDockerImage")
+      val exitValue = run("Postgres start", s"docker run --name $postgresName -d -p $port:5432 $postgresDockerImage")
 
       if(exitValue != 0)
         throw new RuntimeException("Starting docker container failed")

@@ -36,7 +36,7 @@ libraryDependencies ++= Seq(
 
 // *** Runtime configurations ***
 
-fork in run := true
+fork := true
 
 envVars in Test ++= Map(
   "POSTGRES_HOST" -> "127.0.0.1",
@@ -46,7 +46,6 @@ envVars in Test ++= Map(
 javaOptions in Runtime ++= ConfigurationSettings.Dev
 
 javaOptions in Test    ++= ConfigurationSettings.Test
-
 
 // *** Play configuration settings ***
 

@@ -9,4 +9,6 @@ GET        /healthcheck                  @toguru.app.Application.healthCheck
 
 GET        /readycheck                   @toguru.app.Application.readyCheck
 
+GET        /toggle/:id                   @toguru.toggles.ToggleController.get(id: String)
+
 POST       /toggle                       @toguru.toggles.ToggleController.create
