@@ -9,7 +9,13 @@ import scala.concurrent.Future
 
 object RestUtils {
 
-  def json[A](sample: JsValue)(implicit reader: Reads[A]): BodyParser[A] =
+  def errorJson(status: String, reason: String): JsObject =
+    Json.obj("status" -> status, "reason" -> reason)
+
+  def errorJson(status: String, reason: String, remedy: String): JsObject =
+    Json.obj("status" -> status, "reason" -> reason, "remedy" -> remedy)
+
+  def json[A](sample: A)(implicit reader: Reads[A], writer: Writes[A]): BodyParser[A] =
     BodyParser("json reader") { request =>
       import play.api.libs.iteratee.Execution.Implicits.trampoline
       BodyParsers.parse.tolerantJson(request).mapFuture {
@@ -19,7 +25,7 @@ object RestUtils {
           jsValue.validate(reader).map { a =>
             Future.successful(Right(a))
           }.recoverTotal { jsError =>
-            Future.successful(Left(badJsonResponse(sample, jsError)))
+            Future.successful(Left(badJsonResponse(Json.toJson(sample), jsError)))
           }
       }
     }
@@ -29,23 +35,24 @@ object RestUtils {
       case (path, errors) => path.toString() -> JsArray(errors.map(e => JsString(e.message)))
     })
 
-    BadRequest(Json.obj(
-      "status" -> "Bad Request",
-      "reason" -> "Provided json body is not valid",
-      "remedy" -> "Provide a valid json body of the form given in the sample field",
-      "sample" -> sample,
-      "errors" -> errorsObject
-    ))
+    BadRequest(
+      errorJson(
+        "Bad Request",
+        "Provided json body is not valid",
+        "Provide a valid json body of the form given in the sample field"
+      ) ++
+      Json.obj("sample" -> sample, "errors" -> errorsObject)
+    )
   }
 
   def badHeaderResponse(request: Request[_], allowedHeaders: String*) = {
     import HeaderNames.ACCEPT
 
     val givenAcceptHeaders = request.acceptedTypes.mkString(", ")
-    BadRequest(Json.obj(
-      "status" -> "Bad Request",
-      "reason" -> s"No supported $ACCEPT request header provided (given was '$givenAcceptHeaders').",
-      "remedy" -> s"Include ${allowedHeaders.mkString(", or")} in the $ACCEPT request header"))
+    BadRequest(errorJson(
+      "Bad Request",
+      s"No supported $ACCEPT request header provided (given was '$givenAcceptHeaders').",
+      s"Include ${allowedHeaders.mkString(", or")} in the $ACCEPT request header"))
   }
 
   object OnlyJson extends ActionFilter[Request] with HeaderNames with AcceptExtractors {

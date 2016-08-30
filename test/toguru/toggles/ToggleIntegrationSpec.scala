@@ -26,7 +26,7 @@ class ToggleIntegrationSpec extends PlaySpec
   def getToggle(name: String): Option[Toggle] = {
     import akka.pattern.ask
 
-    val actor = ToggleActor.provider(app.actorSystem).create(name)
+    val actor = ToggleActor.provider(app.actorSystem).create(ToggleActor.toId(name))
     await((actor ? GetToggle).mapTo[Option[Toggle]])
   }
 
@@ -44,16 +44,20 @@ class ToggleIntegrationSpec extends PlaySpec
       val body = toggleAsString(name)
 
       // execute
-      val response = await(wsClient.url(toggleEndpointURL).post(body))
+      val createResponse = await(wsClient.url(toggleEndpointURL).post(body))
+      val getResponse    = await(wsClient.url(s"$toggleEndpointURL/toggle-name").get)
+
 
       // verify
-      response.status mustBe OK
-      val json = Json.parse(response.body)
+      createResponse.status mustBe OK
+      val json = Json.parse(createResponse.body)
 
       (json \ "status").asOpt[String] mustBe Some("Ok")
 
-      val maybeToggle = getToggle(name)
-      maybeToggle mustBe Some(Toggle(name, "toggle description", Map("team" -> "Shared Services")))
+      getResponse.status mustBe OK
+
+      val maybeToggle = Json.parse(getResponse.body).asOpt(Json.reads[Toggle])
+      maybeToggle mustBe Some(Toggle("toggle-name", "toggle name", "toggle description", Map("team" -> "Shared Services")))
     }
 
     "reject creating duplicate toggles" in {

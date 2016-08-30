@@ -6,7 +6,13 @@ import akka.actor.{ActorRef, ActorSystem, Props}
 
 import ToggleActor._
 
-case class Toggle(name: String, description: String, tags: Map[String, String])
+case class Toggle(id: String, name: String, description: String, tags: Map[String, String])
+
+
+trait ToggleActorProvider {
+  def create(id: String): ActorRef
+  def stop(ref: ActorRef)
+}
 
 object ToggleActor {
   case class CreateToggleCommand(name: String, description: String, tags: Map[String, String])
@@ -23,7 +29,7 @@ object ToggleActor {
 
   def provider(system: ActorSystem) = new ToggleActorProvider {
 
-    def create(name: String): ActorRef = system.actorOf(Props(new ToggleActor(toId(name))))
+    def create(id: String): ActorRef = system.actorOf(Props(new ToggleActor(id)))
 
     def stop(ref: ActorRef): Unit = system.stop(ref)
   }
@@ -37,7 +43,7 @@ class ToggleActor(toggleId: String) extends PersistentActor with EventPublishing
 
   override def receiveRecover: Receive = {
     case ToggleCreated(name, description, tags) =>
-      toggle = Some(Toggle(name, description, tags))
+      toggle = Some(Toggle(toggleId, name, description, tags))
   }
 
   override def receiveCommand: Receive = {
