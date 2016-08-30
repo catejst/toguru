@@ -9,15 +9,9 @@
     <appender-ref ref="logs-stdout" />
   </appender>
 
-  <logger name="com.zaxxer.hikari.pool.HikariPool" level="warn" additivity="false">
-    <appender-ref ref="async-logs-stdout" />
-  </logger>
-  <logger name="com.zaxxer.hikari.HikariConfig" level="warn" additivity="false">
-    <appender-ref ref="async-logs-stdout" />
-  </logger>
-  <logger name="com.zaxxer.hikari.pool.PoolBase" level="warn" additivity="false">
-    <appender-ref ref="async-logs-stdout" />
-  </logger>
+  <logger name="com.zaxxer.hikari.pool.HikariPool" level="warn" />
+  <logger name="com.zaxxer.hikari.HikariConfig" level="warn" />
+  <logger name="com.zaxxer.hikari.pool.PoolBase" level="warn" additivity="false" />
 
   <root level="INFO">
     <appender-ref ref="async-logs-stdout" />
