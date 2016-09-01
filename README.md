@@ -1,9 +1,36 @@
-# Toguru (トグル)
+# Toguru - トグル
+
+[![Build Status](https://travis-ci.org/AutoScout24/toguru.svg?branch=master)](https://travis-ci.org/AutoScout24/toguru)
+[![Docker Pulls](https://img.shields.io/docker/pulls/as24/toguru.svg)](https://hub.docker.com/r/as24/toguru/)
 
 The toggle guru (Japanese for toggle).
 
-[![Build Status](https://travis-ci.org/AutoScout24/toguru.svg?branch=master)](https://travis-ci.org/AutoScout24/toguru)
 
+## Development setup
+
+### Dependencies
+
+A dev environment requires [Docker](https://www.docker.com/), [Docker Compose](https://docs.docker.com/compose/) and JDK 8 (e.g. [OpenJDK 8](http://openjdk.java.net/install/)).
+
+### Getting Started
+
+Start your dev server with
+
+```
+docker-compose up --build
+```
+
+Run the tests with
+
+```
+./activator test
+```
+
+Build a release with
+
+```
+./activator docker:publishLocal
+```
 
 ## Simplified Akka Persistence Setup
 
