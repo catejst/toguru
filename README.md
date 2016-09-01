@@ -1,11 +1,11 @@
 # Toguru (トグル)
 
-The toggle guru (Japanese for Toggle).
+The toggle guru (Japanese for toggle).
 
 [![Build Status](https://travis-ci.org/AutoScout24/toguru.svg?branch=master)](https://travis-ci.org/AutoScout24/toguru)
 
 
-## Simplified akka persistence setup
+## Simplified Akka Persistence Setup
 
 We decided to use a simplified Akka persistence setup in which we rely on the
 data storage for high availability and failover; by this, we avoid having to set
@@ -15,10 +15,9 @@ have to bring up a persistent actor in each request, replay its history, and
 stop the actor after the request has been processed. The request processing flow
 that is entailed by this decision is detailed in the following section.
 
-## Processing flow for mutating http requests
+## Processing flow for Mutating Http Requests
 
 ![Toguru Request Flow](https://cloud.githubusercontent.com/assets/6724788/18165628/99d02770-7046-11e6-854f-57fef3071016.png)
-
 
 Http requests that modify persistent data (i.e. POST and PUT) are processed in
 the following way:
@@ -45,8 +44,8 @@ command.
 persistent actor.
 
 The processing of GET requests is similar; since it does not alter the database
-and the actor state, the steps 6. (recover) and 7. (update) can be omitted in
-the request flow.
+and the actor state, the steps 5. (persist), 6. (recover), and 7. (update) can 
+be omitted in the request flow.
 
 ## License
 
