@@ -22,6 +22,8 @@ object ToggleActor {
 
   case class SetGlobalRolloutCommand(percentage: Int)
 
+  case object DeleteGlobalRolloutCommand
+
   case object Success
 
   case class ToggleDoesNotExist(id: String)
@@ -47,10 +49,13 @@ class ToggleActor(toggleId: String, var toggle: Option[Toggle] = None) extends P
       toggle = Some(Toggle(toggleId, name, description, tags))
 
     case GlobalRolloutCreated(percentage) =>
-      toggle = toggle.map{ t => t.copy(rolloutPercentage = Some(percentage))}
+      toggle = toggle.map { t => t.copy(rolloutPercentage = Some(percentage))}
 
     case GlobalRolloutUpdated(percentage) =>
-      toggle = toggle.map{ t => t.copy(rolloutPercentage = Some(percentage))}
+      toggle = toggle.map { t => t.copy(rolloutPercentage = Some(percentage))}
+
+    case GlobalRolloutDeleted() =>
+      toggle = toggle.map { t => t.copy(rolloutPercentage = None) }
   }
 
   override def receiveCommand = handleToggleCommands.orElse(handleGlobalRolloutCommands)
@@ -77,6 +82,16 @@ class ToggleActor(toggleId: String, var toggle: Option[Toggle] = None) extends P
         persist(event) { set =>
           receiveRecover(set)
           sender ! Success
+        }
+
+      case DeleteGlobalRolloutCommand =>
+        t.rolloutPercentage match {
+          case Some(_) =>
+            persist(GlobalRolloutDeleted()) { deleted =>
+              receiveRecover(deleted)
+              sender ! Success
+            }
+          case None => sender ! Success
         }
     }
   }

@@ -80,6 +80,16 @@ class ToggleIntegrationSpec extends PlaySpec
 
       fetchToggle().rolloutPercentage mustBe Some(42)
     }
+
+    "delete a global rollout condition" in {
+      // execute
+      val createResponse = await(wsClient.url(globalRolloutEndpoint).delete())
+
+      // verify
+      verifyResponseIsOk(createResponse)
+
+      fetchToggle().rolloutPercentage mustBe None
+    }
   }
 
 

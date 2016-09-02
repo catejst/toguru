@@ -1,6 +1,6 @@
 package toguru.toggles
 
-import akka.actor.Props
+import akka.actor.{ActorRef, Props}
 import akka.pattern.ask
 import toguru.toggles.ToggleActor._
 
@@ -11,6 +11,8 @@ class ToggleActorSpec extends ActorSpec {
     val toggle        = Toggle("id", "name","description")
     val createCommand = CreateToggleCommand("name", "toggle description", Map("team" -> "Shared Services"))
     val setGlobalRolloutCommand = SetGlobalRolloutCommand(42)
+
+    def fetchToggle(actor: ActorRef): Toggle = await(actor ? GetToggle).asInstanceOf[Some[Toggle]].get
   }
 
   "actor" should {
@@ -40,14 +42,27 @@ class ToggleActorSpec extends ActorSpec {
       val response = await(actor ? setGlobalRolloutCommand)
       response mustBe Success
 
-      val actorToggle = await(actor ? GetToggle).asInstanceOf[Some[Toggle]].get
-      actorToggle.rolloutPercentage mustBe Some(setGlobalRolloutCommand.percentage)
+      fetchToggle(actor).rolloutPercentage mustBe Some(setGlobalRolloutCommand.percentage)
     }
 
     "reject set global rollout condition command when toggle does not exists" in new ToggleActorSetup {
       val actor = createActor("toggle-4")
       val response = await(actor ? setGlobalRolloutCommand)
       response mustBe ToggleDoesNotExist("toggle-4")
+    }
+
+    "delete rollout condition when receiving command" in new ToggleActorSetup {
+      val actor = createActor("toggle-5", Some(toggle.copy(rolloutPercentage = Some(42))))
+      val response = await(actor ? DeleteGlobalRolloutCommand)
+      response mustBe Success
+
+      fetchToggle(actor).rolloutPercentage mustBe None
+    }
+
+    "return success on delete when rollout condition does not exist" in new ToggleActorSetup {
+      val actor = createActor("toggle-6", Some(toggle))
+      val response = await(actor ? DeleteGlobalRolloutCommand)
+      response mustBe Success
     }
   }
 }

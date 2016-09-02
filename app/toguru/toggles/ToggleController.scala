@@ -93,4 +93,18 @@ class ToggleController(config: Config, provider: ToggleActorProvider) extends Co
         })
     }
   }
+
+  def deleteGlobalRollout(toggleId: String) = ActionWithJson.async { request =>
+    import play.api.libs.concurrent.Execution.Implicits._
+    implicit val actionId = "delete-global-rollout"
+
+    withActor(toggleId) { toggleActor =>
+      (toggleActor ? DeleteGlobalRolloutCommand).map(
+        both(whenToggleExists, whenPersisted) {
+          case Success =>
+            publishSuccess(actionId, toggleId)
+            Ok(Json.obj("status" -> "Ok"))
+        })
+    }
+  }
 }
