@@ -11,25 +11,22 @@ trait ToggleActorProvider {
 }
 
 object ToggleActor {
+
   case class CreateToggleCommand(name: String, description: String, tags: Map[String, String])
-
-  case class CreateGlobalRolloutConditionCommand(percentage: Int)
-
-  case class UpdateGlobalRolloutConditionCommand(percentage: Int)
 
   case class CreateSucceeded(id: String)
 
-  case class PersistFailed(id: String, cause: Throwable)
-
   case class ToggleAlreadyExists(id: String)
 
-  case class ToggleDoesNotExist(id: String)
+  case object GetToggle
 
-  case class GlobalRolloutDoesNotExist(id: String)
+  case class SetGlobalRolloutCommand(percentage: Int)
 
   case object Success
 
-  case object GetToggle
+  case class ToggleDoesNotExist(id: String)
+
+  case class PersistFailed(id: String, cause: Throwable)
 
   def toId(name: String): String = name.trim.toLowerCase.replaceAll("\\s+", "-")
 
@@ -59,38 +56,28 @@ class ToggleActor(toggleId: String, var toggle: Option[Toggle] = None) extends P
   override def receiveCommand = handleToggleCommands.orElse(handleGlobalRolloutCommands)
 
   def handleToggleCommands: Receive = {
+    case GetToggle => sender ! toggle
+
     case CreateToggleCommand(name, description, tags) =>
       toggle match {
         case Some(_) => sender ! ToggleAlreadyExists(toggleId)
-        case None    => persistCreateEvent(name, description, tags)
-      }
 
-    case GetToggle => sender ! toggle
+        case None =>
+          persist(ToggleCreated(name, description, tags)) { created =>
+            receiveRecover(created)
+            sender ! CreateSucceeded(toggleId)
+          }
+      }
   }
 
   def handleGlobalRolloutCommands: Receive = withExistingToggle {
     t => {
-      case CreateGlobalRolloutConditionCommand(percentage) =>
-        persist(GlobalRolloutCreated(percentage)) { set =>
+      case SetGlobalRolloutCommand(p) =>
+        val event = if(t.rolloutPercentage.isDefined) GlobalRolloutCreated(p) else GlobalRolloutUpdated(p)
+        persist(event) { set =>
           receiveRecover(set)
           sender ! Success
         }
-
-      case UpdateGlobalRolloutConditionCommand(percentage) => t.rolloutPercentage match {
-        case Some(p) => persist(GlobalRolloutUpdated(percentage)) { set =>
-          receiveRecover(set)
-          sender ! Success
-        }
-
-        case None => sender ! GlobalRolloutDoesNotExist(toggleId)
-      }
-    }
-  }
-
-  def persistCreateEvent(name: String, description: String, tags: Map[String, String]): Unit = {
-    persist(ToggleCreated(name, description, tags)) { created =>
-      receiveRecover(created)
-      sender ! CreateSucceeded(toggleId)
     }
   }
 

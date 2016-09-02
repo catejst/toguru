@@ -1,6 +1,5 @@
 package toguru.toggles
 
-import akka.actor.Actor.Receive
 import akka.actor.{Actor, ActorRef, ActorSystem, Props}
 import akka.pattern.ask
 import akka.util.Timeout
@@ -90,18 +89,18 @@ class ToggleControllerSpec extends PlaySpec with Results with MockitoSugar {
     }
   }
 
-  "create global rollout condition" should {
-    "return ok when given a create command" in {
+  "set global rollout condition" should {
+    "return ok when given a set command" in {
       val props = Props(new Actor {
         def receive: Receive = {
-          case _ : CreateGlobalRolloutConditionCommand => sender ! Success
+          case _ : SetGlobalRolloutCommand => sender ! Success
         }
       })
 
       val controller = createController(props)
-      val request = FakeRequest().withBody(CreateGlobalRolloutConditionCommand(42))
+      val request = FakeRequest().withBody(SetGlobalRolloutCommand(42))
 
-      val result: Future[Result] = controller.createGlobalRollout("toggle-id").apply(request)
+      val result: Future[Result] = controller.setGlobalRollout("toggle-id").apply(request)
 
       val bodyJson: JsValue = contentAsJson(result)
       status(result) mustBe 200
@@ -112,47 +111,9 @@ class ToggleControllerSpec extends PlaySpec with Results with MockitoSugar {
       val controller = createController(Props(new Actor {
         override def receive = { case _ => sender ! ToggleDoesNotExist("toggle-id") }
       }))
-      val request = FakeRequest().withBody(CreateGlobalRolloutConditionCommand(42))
+      val request = FakeRequest().withBody(SetGlobalRolloutCommand(42))
 
-      val result: Future[Result] = controller.createGlobalRollout("toggle-id").apply(request)
-
-      status(result) mustBe 404
-    }
-  }
-
-  "update global rollout condition" should {
-    "return ok when given a update command" in {
-      val controller = createController(Props(new Actor {
-        override def receive = { case _ => sender ! Success }
-      }))
-
-      val request = FakeRequest().withBody(UpdateGlobalRolloutConditionCommand(24))
-
-      val result: Future[Result] = controller.updateGlobalRollout("toggle-id").apply(request)
-
-      status(result) mustBe 200
-    }
-
-    "returns not found when toggle does not exist" in {
-      val controller = createController(Props(new Actor {
-        override def receive = { case _ => sender ! ToggleDoesNotExist("toggle-id") }
-      }))
-
-      val request = FakeRequest().withBody(UpdateGlobalRolloutConditionCommand(24))
-
-      val result: Future[Result] = controller.updateGlobalRollout("toggle-id").apply(request)
-
-      status(result) mustBe 404
-    }
-
-    "returns not found when no global rollout condition was created" in {
-      val controller = createController(Props(new Actor {
-        override def receive = { case _ => sender ! GlobalRolloutDoesNotExist("toggle-id") }
-      }))
-
-      val request = FakeRequest().withBody(UpdateGlobalRolloutConditionCommand(24))
-
-      val result: Future[Result] = controller.updateGlobalRollout("toggle-id").apply(request)
+      val result: Future[Result] = controller.setGlobalRollout("toggle-id").apply(request)
 
       status(result) mustBe 404
     }

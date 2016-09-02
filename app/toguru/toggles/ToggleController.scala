@@ -21,16 +21,11 @@ object ToggleController extends Results with JsonResponses with ToggleActorRespo
   implicit val createToggleReads = Json.reads[CreateToggleCommand]
   implicit val createToggleWrites = Json.writes[CreateToggleCommand]
 
-  implicit val globalRolloutReads = Json.reads[CreateGlobalRolloutConditionCommand]
-  implicit val globalRolloutWrites = Json.writes[CreateGlobalRolloutConditionCommand]
-
-  implicit val updateGlobalRolloutReads = Json.reads[UpdateGlobalRolloutConditionCommand]
-  implicit val updateGlobalRolloutWrites = Json.writes[UpdateGlobalRolloutConditionCommand]
+  implicit val globalRolloutReads = Json.reads[SetGlobalRolloutCommand]
+  implicit val globalRolloutWrites = Json.writes[SetGlobalRolloutCommand]
 
   val sampleCreateToggle = CreateToggleCommand("toggle name", "toggle description", Map("team" -> "Toguru team"))
-  val sampleCreateGlobalRollout = CreateGlobalRolloutConditionCommand(42)
-  val sampleUpdateGlobalRollout = UpdateGlobalRolloutConditionCommand(42)
-
+  val sampleSetGlobalRollout = SetGlobalRolloutCommand(42)
 }
 
 class ToggleController(config: Config, provider: ToggleActorProvider) extends Controller with EventPublishing {
@@ -84,7 +79,7 @@ class ToggleController(config: Config, provider: ToggleActorProvider) extends Co
     }
   }
 
-  def createGlobalRollout(toggleId: String) = ActionWithJson.async(json(sampleCreateGlobalRollout)) { request =>
+  def setGlobalRollout(toggleId: String) = ActionWithJson.async(json(sampleSetGlobalRollout)) { request =>
     import play.api.libs.concurrent.Execution.Implicits._
     val command = request.body
     implicit val actionId = "set-global-rollout"
@@ -96,28 +91,6 @@ class ToggleController(config: Config, provider: ToggleActorProvider) extends Co
             publishSuccess(actionId, toggleId)
             Ok(Json.obj("status" -> "Ok"))
         })
-    }
-  }
-
-  def updateGlobalRollout(toggleId: String) = ActionWithJson.async(json(sampleUpdateGlobalRollout))  { request =>
-    import play.api.libs.concurrent.Execution.Implicits._
-    val command = request.body
-    implicit val actionId = "update-global-rollout"
-
-    withActor(toggleId) { toggleActor =>
-      (toggleActor ? command).map(
-        both(whenToggleExists, whenPersisted) {
-          case Success =>
-            publishSuccess(actionId, toggleId)
-            Ok(Json.obj("status" -> "Ok"))
-
-          case GlobalRolloutDoesNotExist(id) =>
-            publishFailure(actionId, toggleId)
-            NotFound(errorJson(
-              "Not Found",
-              s"The toggle with id $id does not have a rollout condition",
-              "Create a rollout condition (using POST) instead of updating it (using PUT)"))
-      })
     }
   }
 }

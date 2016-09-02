@@ -60,7 +60,7 @@ class ToggleIntegrationSpec extends PlaySpec
       val body = """{"percentage": 55}"""
 
       // execute
-      val createResponse = await(wsClient.url(globalRolloutEndpoint).post(body))
+      val createResponse = await(wsClient.url(globalRolloutEndpoint).put(body))
 
       // verify
       verifyResponseIsOk(createResponse)
