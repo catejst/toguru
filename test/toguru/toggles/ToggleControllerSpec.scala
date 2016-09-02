@@ -106,7 +106,6 @@ class ToggleControllerSpec extends PlaySpec with Results with MockitoSugar {
       val bodyJson: JsValue = contentAsJson(result)
       status(result) mustBe 200
       (bodyJson \ "status").asOpt[String] mustBe Some("Ok")
-      (bodyJson \ "id").asOpt[String] mustBe Some("toggle-id")
     }
 
     "returns not found when toggle does not exist" in {
@@ -146,9 +145,9 @@ class ToggleControllerSpec extends PlaySpec with Results with MockitoSugar {
       status(result) mustBe 404
     }
 
-    "returns global rollout condition does not exists if no global rollout condition was created" in {
+    "returns not found when no global rollout condition was created" in {
       val controller = createController(Props(new Actor {
-        override def receive = { case _ => sender ! GlobalRolloutConditionDoesNotExist("toggle-id") }
+        override def receive = { case _ => sender ! GlobalRolloutDoesNotExist("toggle-id") }
       }))
 
       val request = FakeRequest().withBody(UpdateGlobalRolloutConditionCommand(24))
@@ -165,9 +164,10 @@ class ToggleControllerSpec extends PlaySpec with Results with MockitoSugar {
         override def receive = { case _ => () }
       }))
       val timeout = Timeout(50.millis)
+      implicit val actionId = "action-id"
       import play.api.libs.concurrent.Execution.Implicits._
 
-      val result = controller.withActor("toggle-id", "action-id") { actor =>
+      val result = controller.withActor("toggle-id") { actor =>
         (actor ? GetToggle)(timeout).map(_ => Ok("Ok"))
       }
 
