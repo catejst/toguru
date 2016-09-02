@@ -16,18 +16,18 @@ class ToggleEventProtoBufSerializer extends SerializerWithStringManifest {
 
   override def identifier: Int = 4001
 
-  final val CreatedManifest = classOf[ToggleCreated].getSimpleName
-
-  final val GlobalRolloutCreateManifest = classOf[GlobalRolloutCreated].getSimpleName
-
+  final val CreatedManifest              = classOf[ToggleCreated].getSimpleName
+  final val GlobalRolloutCreateManifest  = classOf[GlobalRolloutCreated].getSimpleName
   final val GlobalRolloutUpdatedManifest = classOf[GlobalRolloutUpdated].getSimpleName
+  final val GlobalRolloutDeletedManifest = classOf[GlobalRolloutDeleted].getSimpleName
 
   override def manifest(o: AnyRef): String = o.getClass.getSimpleName
 
   override def fromBinary(bytes: Array[Byte], manifest: String): AnyRef = manifest match {
-    case CreatedManifest             => ToggleCreated.parseFrom(bytes)
-    case GlobalRolloutCreateManifest => GlobalRolloutCreated.parseFrom(bytes)
+    case CreatedManifest              => ToggleCreated.parseFrom(bytes)
+    case GlobalRolloutCreateManifest  => GlobalRolloutCreated.parseFrom(bytes)
     case GlobalRolloutUpdatedManifest => GlobalRolloutUpdated.parseFrom(bytes)
+    case GlobalRolloutDeletedManifest => GlobalRolloutDeleted.parseFrom(bytes)
   }
 
   override def toBinary(o: AnyRef): Array[Byte] = o match {

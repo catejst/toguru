@@ -1,6 +1,5 @@
 package toguru.toggles
 
-import akka.actor.Actor.Receive
 import akka.actor.{Actor, ActorRef, ActorSystem, Props}
 import akka.pattern.ask
 import akka.util.Timeout
@@ -37,9 +36,7 @@ class ToggleControllerSpec extends PlaySpec with Results with MockitoSugar {
   "get method" should {
     "return toggle for an existing toggle" in {
       val props = Props(new Actor {
-        def receive: Receive = {
-          case GetToggle => sender ! Some(Toggle("toggle-id", "toggle", "desc"))
-        }
+        def receive = { case GetToggle => sender ! Some(Toggle("toggle-id", "toggle", "desc")) }
       })
 
       val controller = createController(props)
@@ -54,12 +51,9 @@ class ToggleControllerSpec extends PlaySpec with Results with MockitoSugar {
     }
 
     "return 404 for a non-existing toggle" in {
-      val props = Props(new Actor {
-        def receive: Receive = {
-          case GetToggle => sender ! None
-        }
-      })
-      val controller = createController(props)
+      val controller = createController(Props(new Actor {
+        def receive = { case GetToggle => sender ! None }
+      }))
       val request = FakeRequest()
 
       val result: Future[Result] = controller.get("toggle-id")().apply(request)
@@ -72,13 +66,9 @@ class ToggleControllerSpec extends PlaySpec with Results with MockitoSugar {
 
   "create method" should {
     "return ok when given a create command" in {
-      val props = Props(new Actor {
-        def receive: Receive = {
-          case _ : CreateToggleCommand => sender ! CreateSucceeded("toggle-id")
-        }
-      })
-
-      val controller = createController(props)
+      val controller = createController(Props(new Actor {
+        def receive = { case _ : CreateToggleCommand => sender ! CreateSucceeded("toggle-id") }
+      }))
       val request = FakeRequest().withBody(CreateToggleCommand("toggle", "description", Map.empty))
 
       val result: Future[Result] = controller.create().apply(request)
@@ -90,72 +80,45 @@ class ToggleControllerSpec extends PlaySpec with Results with MockitoSugar {
     }
   }
 
-  "create global rollout condition" should {
-    "return ok when given a create command" in {
-      val props = Props(new Actor {
-        def receive: Receive = {
-          case _ : CreateGlobalRolloutConditionCommand => sender ! Success
-        }
-      })
+  "set global rollout condition" should {
+    "return ok when given a set command" in {
+      val controller = createController(Props(new Actor {
+        def receive = { case _ : SetGlobalRolloutCommand => sender ! Success }
+      }))
+      val request = FakeRequest().withBody(SetGlobalRolloutCommand(42))
 
-      val controller = createController(props)
-      val request = FakeRequest().withBody(CreateGlobalRolloutConditionCommand(42))
-
-      val result: Future[Result] = controller.createGlobalRollout("toggle-id").apply(request)
+      val result: Future[Result] = controller.setGlobalRollout("toggle-id").apply(request)
 
       val bodyJson: JsValue = contentAsJson(result)
       status(result) mustBe 200
       (bodyJson \ "status").asOpt[String] mustBe Some("Ok")
-      (bodyJson \ "id").asOpt[String] mustBe Some("toggle-id")
     }
 
     "returns not found when toggle does not exist" in {
       val controller = createController(Props(new Actor {
         override def receive = { case _ => sender ! ToggleDoesNotExist("toggle-id") }
       }))
-      val request = FakeRequest().withBody(CreateGlobalRolloutConditionCommand(42))
+      val request = FakeRequest().withBody(SetGlobalRolloutCommand(42))
 
-      val result: Future[Result] = controller.createGlobalRollout("toggle-id").apply(request)
+      val result: Future[Result] = controller.setGlobalRollout("toggle-id").apply(request)
 
       status(result) mustBe 404
     }
   }
 
-  "update global rollout condition" should {
-    "return ok when given a update command" in {
+  "delete global rollout condition" should {
+    "return ok when called" in {
       val controller = createController(Props(new Actor {
-        override def receive = { case _ => sender ! Success }
+        def receive = { case DeleteGlobalRolloutCommand => sender ! Success }
       }))
 
-      val request = FakeRequest().withBody(UpdateGlobalRolloutConditionCommand(24))
+      val request = FakeRequest()
 
-      val result: Future[Result] = controller.updateGlobalRollout("toggle-id").apply(request)
+      val result: Future[Result] = controller.deleteGlobalRollout("toggle-id")().apply(request)
 
+      val bodyJson: JsValue = contentAsJson(result)
       status(result) mustBe 200
-    }
-
-    "returns not found when toggle does not exist" in {
-      val controller = createController(Props(new Actor {
-        override def receive = { case _ => sender ! ToggleDoesNotExist("toggle-id") }
-      }))
-
-      val request = FakeRequest().withBody(UpdateGlobalRolloutConditionCommand(24))
-
-      val result: Future[Result] = controller.updateGlobalRollout("toggle-id").apply(request)
-
-      status(result) mustBe 404
-    }
-
-    "returns global rollout condition does not exists if no global rollout condition was created" in {
-      val controller = createController(Props(new Actor {
-        override def receive = { case _ => sender ! GlobalRolloutConditionDoesNotExist("toggle-id") }
-      }))
-
-      val request = FakeRequest().withBody(UpdateGlobalRolloutConditionCommand(24))
-
-      val result: Future[Result] = controller.updateGlobalRollout("toggle-id").apply(request)
-
-      status(result) mustBe 404
+      (bodyJson \ "status").asOpt[String] mustBe Some("Ok")
     }
   }
 
@@ -165,9 +128,10 @@ class ToggleControllerSpec extends PlaySpec with Results with MockitoSugar {
         override def receive = { case _ => () }
       }))
       val timeout = Timeout(50.millis)
+      implicit val actionId = "action-id"
       import play.api.libs.concurrent.Execution.Implicits._
 
-      val result = controller.withActor("toggle-id", "action-id") { actor =>
+      val result = controller.withActor("toggle-id") { actor =>
         (actor ? GetToggle)(timeout).map(_ => Ok("Ok"))
       }
 

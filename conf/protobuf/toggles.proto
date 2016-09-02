@@ -20,3 +20,7 @@ message GlobalRolloutUpdated {
     option (scalapb.message).extends = "toguru.toggles.ToggleEvent";
     int32 percentage = 1;
 }
+
+message GlobalRolloutDeleted {
+    option (scalapb.message).extends = "toguru.toggles.ToggleEvent";
+}
