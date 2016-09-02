@@ -49,26 +49,33 @@ that is entailed by this decision is detailed in the following section.
 Http requests that modify persistent data (i.e. POST and PUT) are processed in
 the following way:
 
-1. *request:* a controller action is invoked with a request to process.
-2. *create:* the persistent actor that is needed to process the request is
-created - as usual, indirectly through the Akka actor system.
+1. *request:* a [controller action](https://github.com/AutoScout24/toguru/blob/da8f1d70d3558c71eec923c1fc385a8324d3b33a/app/toguru/toggles/ToggleController.scala#L63)
+is invoked with a request to process.
+2. *create:* the persistent actor that is needed to process the request [is
+created](https://github.com/AutoScout24/toguru/blob/da8f1d70d3558c71eec923c1fc385a8324d3b33a/app/toguru/toggles/ToggleController.scala#L41) - 
+as usual, indirectly through the Akka actor system.
 3. *recover:* On actor initialization, Akka persistence replays all events from
-the database to the actor, and the actor recovers its internal state based on
+the database to the actor, and [the actor recovers](https://github.com/AutoScout24/toguru/blob/da8f1d70d3558c71eec923c1fc385a8324d3b33a/app/toguru/toggles/ToggleActor.scala#L47-L59)
+its internal state based on
 the replayed events.
-4. *ask:* the controller asks the actor (asynchronously) to execute a command,
-and the actor validates that the command can be executed.
-5. *persist:* After successful validation, the actor persists derived events to
-the journal. A custom event adapter (Tagging in the picture) tags the events for
-later persistent queries, and a custom ProtoBuf serializer serializes the events.
-6. *recover:* Akka invokes the receiveRecover method to replay the successfully
-persisted events to the actor.
-7. *update:* The actor updates its internal state based on the newly persisted
-events.
-8. *reply:* A reply is sent to the controller that describes the result of the
-command.
-9. *stop:* The controller stops the actor, since it has completed its task.
-10. *result:* A http result is send to the client based on the reply from the
-persistent actor.
+4. *ask:* the controller [asks the actor](https://github.com/AutoScout24/toguru/blob/da8f1d70d3558c71eec923c1fc385a8324d3b33a/app/toguru/toggles/ToggleController.scala#L70) 
+(asynchronously) to execute a command, and the [actor validates](https://github.com/AutoScout24/toguru/blob/da8f1d70d3558c71eec923c1fc385a8324d3b33a/app/toguru/toggles/ToggleActor.scala#L67-L70)
+that the command can be executed.
+5. *persist:* After successful validation, the [actor persists derived events](https://github.com/AutoScout24/toguru/blob/da8f1d70d3558c71eec923c1fc385a8324d3b33a/app/toguru/toggles/ToggleActor.scala#L71)
+to the journal. A [custom event adapter](https://github.com/AutoScout24/toguru/blob/da8f1d70d3558c71eec923c1fc385a8324d3b33a/app/toguru/toggles/ToggleEventSerialization.scala#L42)
+(Tagging in the picture) tags the events for later persistent queries, and a 
+[custom ProtoBuf serializer](https://github.com/AutoScout24/toguru/blob/da8f1d70d3558c71eec923c1fc385a8324d3b33a/app/toguru/toggles/ToggleEventSerialization.scala#L15)
+serializes the events [specified as protobuf messages](https://github.com/AutoScout24/toguru/blob/da8f1d70d3558c71eec923c1fc385a8324d3b33a/conf/protobuf/toggles.proto#L7-L12).
+6. *recover:* Akka invokes the [receiveRecover method](https://github.com/AutoScout24/toguru/blob/da8f1d70d3558c71eec923c1fc385a8324d3b33a/app/toguru/toggles/ToggleActor.scala#L48-L49)
+to replay the successfully persisted events to the actor.
+7. *update:* The actor [updates](https://github.com/AutoScout24/toguru/blob/da8f1d70d3558c71eec923c1fc385a8324d3b33a/app/toguru/toggles/ToggleActor.scala#L48-L49) its [internal state](https://github.com/AutoScout24/toguru/blob/da8f1d70d3558c71eec923c1fc385a8324d3b33a/app/toguru/toggles/ToggleActor.scala#L43)
+based on the newly persisted events.
+8. *reply:* A [reply is sent](https://github.com/AutoScout24/toguru/blob/da8f1d70d3558c71eec923c1fc385a8324d3b33a/app/toguru/toggles/ToggleActor.scala#L73)
+to the controller that describes the result of the command.
+9. *stop:* The controller [stops the actor](https://github.com/AutoScout24/toguru/blob/da8f1d70d3558c71eec923c1fc385a8324d3b33a/app/toguru/toggles/ToggleController.scala#L44), 
+since it has completed its task.
+10. *result:* A http result [is send to the client](https://github.com/AutoScout24/toguru/blob/da8f1d70d3558c71eec923c1fc385a8324d3b33a/app/toguru/toggles/ToggleController.scala#L71-L77)
+based on the reply from the persistent actor.
 
 The processing of GET requests is similar; since it does not alter the database
 and the actor state, the steps 5. (persist), 6. (recover), and 7. (update) can 
