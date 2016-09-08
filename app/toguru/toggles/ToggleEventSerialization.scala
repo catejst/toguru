@@ -7,7 +7,9 @@ import com.trueaccord.scalapb.GeneratedMessage
 /**
   * Marker trait for toggle events.
   */
-trait ToggleEvent extends GeneratedMessage
+trait ToggleEvent extends GeneratedMessage {
+  def meta: Option[Metadata]
+}
 
 /**
   * Serializer for toggle events.
@@ -45,7 +47,6 @@ class ToggleEventTagging extends WriteEventAdapter {
   def withTag(event: Any, tags: String*) = Tagged(event, tags.to[Set])
 
   override def toJournal(event: Any): Any = event match {
-    case _: GlobalRolloutCreated => withTag(event, "toggle", "condition")
     case _: ToggleEvent          => withTag(event, "toggle")
     case _                       => event
   }
