@@ -2,22 +2,21 @@ package toguru.toggles
 
 import akka.actor.ActorRef
 import akka.pattern.ask
-import toguru.PostgresSetup
-import toguru.app.Config
-import play.api.test.Helpers._
 import org.scalatest.BeforeAndAfterAll
 import org.scalatestplus.play.{OneServerPerSuite, PlaySpec}
 import play.api.inject.{BindingKey, QualifierInstance}
-import play.api.libs.json.{JsArray, JsObject, Json}
+import play.api.libs.json.{JsArray, Json}
 import play.api.libs.ws.{WSClient, WSResponse}
 import play.api.mvc.Results
+import play.api.test.Helpers._
 import play.api.test.{DefaultAwaitTimeout, FutureAwaits}
 import play.inject.NamedImpl
+import toguru.app.Config
+import toguru.helpers.PostgresSetup
 import toguru.toggles.AuditLogActor.GetLog
 import toguru.toggles.ToggleStateActor.GetState
 
-import scala.concurrent.duration._
-import scala.concurrent.duration.FiniteDuration
+import scala.concurrent.duration.{FiniteDuration, _}
 
 
 class ToggleIntegrationSpec extends PlaySpec
@@ -39,7 +38,7 @@ class ToggleIntegrationSpec extends PlaySpec
     val toggleId = ToggleActor.toId(name)
     val toggleEndpointURL     = s"http://localhost:$port/toggle"
     val globalRolloutEndpoint = s"$toggleEndpointURL/$toggleId/globalrollout"
-    val toggleUpdateEndpoint  = s"$toggleEndpointURL/$toggleId"
+    val toggleEndpoint  = s"$toggleEndpointURL/$toggleId"
     val toggleStateEndpoint   = s"http://localhost:$port/togglestate"
     val auditLogEndpoint      = s"http://localhost:$port/auditlog"
 
@@ -124,13 +123,29 @@ class ToggleIntegrationSpec extends PlaySpec
       json.asInstanceOf[JsArray].value.size == 2
     }
 
-    "return current audit log" in {
+    "allow to update toggle" in {
+      // execute
+      val response = await(wsClient.url(toggleEndpoint).put(toggleAsString("toggle 3")))
 
+      // verify
+      verifyResponseIsOk(response)
+    }
+
+    "allow to delete a toggle" in {
+      // execute
+      val response = await(wsClient.url(toggleEndpoint).withBody("""{"delete": true}""").delete())
+
+      // verify
+      verifyResponseIsOk(response)
+    }
+
+    "return current audit log" in {
+      val auditLogSize = 7
       val actor = app.injector.instanceOf[ActorRef](namedKey(classOf[ActorRef], "audit-log"))
 
       waitFor(30) {
         val log = await((actor ? GetLog).mapTo[Seq[_]])
-        log.size == 5
+        log.size == auditLogSize
       }
 
       // execute
@@ -141,15 +156,7 @@ class ToggleIntegrationSpec extends PlaySpec
 
       val json = Json.parse(response.body)
       json mustBe a[JsArray]
-      json.asInstanceOf[JsArray].value.size == 5
-    }
-
-    "allow to update toggle" in {
-      // execute
-      val response = await(wsClient.url(toggleUpdateEndpoint).put(toggleAsString("toggle 3")))
-
-      // verify
-      verifyResponseIsOk(response)
+      json.asInstanceOf[JsArray].value.size == auditLogSize
     }
   }
 

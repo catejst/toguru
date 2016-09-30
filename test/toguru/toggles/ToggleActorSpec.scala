@@ -2,7 +2,7 @@ package toguru.toggles
 
 import akka.actor.{ActorRef, Props}
 import akka.pattern.ask
-import akka.persistence.query.{EventEnvelope, PersistenceQuery}
+import akka.persistence.query.PersistenceQuery
 import toguru.toggles.ToggleActor._
 import toguru.events.toggles._
 
@@ -40,7 +40,7 @@ class ToggleActorSpec extends ActorSpec {
     "update toggle when toggle exists" in new ToggleActorSetup {
       val actor = createActor(Some(toggle))
       val response = await(actor ? updateCommand)
-      response mustBe UpdateSucceeded
+      response mustBe Success
 
       fetchToggle(actor) mustBe Toggle(toggleId, toggle.name, updateCommand.description.get, updateCommand.tags.get)
     }
@@ -48,6 +48,20 @@ class ToggleActorSpec extends ActorSpec {
     "reject update when toggle does not exist" in new ToggleActorSetup {
       val actor = createActor()
       val response = await(actor ? updateCommand)
+      response mustBe ToggleDoesNotExist(toggleId)
+    }
+
+    "delete toggle when toggle exists and command confirms delete" in new ToggleActorSetup {
+      val actor = createActor(Some(toggle))
+      val response = await(actor ? DeleteToggleCommand)
+      response mustBe Success
+
+      await(actor ? GetToggle) mustBe None
+    }
+
+    "reject delete when toggle does not exist" in new ToggleActorSetup {
+      val actor = createActor()
+      val response = await(actor ? DeleteToggleCommand)
       response mustBe ToggleDoesNotExist(toggleId)
     }
 

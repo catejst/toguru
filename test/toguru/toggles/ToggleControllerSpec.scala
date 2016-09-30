@@ -83,7 +83,7 @@ class ToggleControllerSpec extends PlaySpec with Results with MockitoSugar {
   "update method" should {
     "return ok when given an update command" in {
       val controller = createController(Props(new Actor {
-        def receive = { case _ : UpdateToggleCommand => sender ! UpdateSucceeded }
+        def receive = { case _ : UpdateToggleCommand => sender ! Success }
       }))
       val request = FakeRequest().withBody(UpdateToggleCommand(Some("toggle"), Some("description"), None))
 
@@ -92,6 +92,32 @@ class ToggleControllerSpec extends PlaySpec with Results with MockitoSugar {
       val bodyJson: JsValue = contentAsJson(result)
       status(result) mustBe 200
       (bodyJson \ "status").asOpt[String] mustBe Some("Ok")
+    }
+  }
+
+  "update method" should {
+    "return ok when given a success confirmation" in {
+      val controller = createController(Props(new Actor {
+        def receive = { case DeleteToggleCommand => sender ! Success }
+      }))
+
+      val result: Future[Result] = controller.delete("toggle").apply(FakeRequest())
+
+      val bodyJson: JsValue = contentAsJson(result)
+      status(result) mustBe 200
+      (bodyJson \ "status").asOpt[String] mustBe Some("Ok")
+    }
+
+    "return not found when toggles does not exist" in {
+      val controller = createController(Props(new Actor {
+        def receive = { case DeleteToggleCommand => sender ! ToggleDoesNotExist("toggle") }
+      }))
+
+      val result: Future[Result] = controller.delete("toggle").apply(FakeRequest())
+
+      val bodyJson: JsValue = contentAsJson(result)
+      status(result) mustBe 404
+      (bodyJson \ "status").asOpt[String] mustBe Some("Not found")
     }
   }
 

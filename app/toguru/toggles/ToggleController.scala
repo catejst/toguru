@@ -84,10 +84,24 @@ class ToggleController(config: Config, provider: ToggleActorProvider) extends Co
     withActor(toggleId) { toggleActor =>
       (toggleActor ? command).map(
         both(whenToggleExists, whenPersisted) {
-          case UpdateSucceeded =>
+          case Success =>
             publishSuccess(actionId, toggleId)
             Ok(Json.obj("status" -> "Ok"))
       })
+    }
+  }
+
+  def delete(toggleId: String) = ActionWithJson.async { request =>
+    import play.api.libs.concurrent.Execution.Implicits._
+    implicit val actionId = "delete-toggle"
+
+    withActor(toggleId) { toggleActor =>
+      (toggleActor ? DeleteToggleCommand).map(
+        both(whenToggleExists, whenPersisted) {
+          case Success =>
+            publishSuccess(actionId, toggleId)
+            Ok(Json.obj("status" -> "Ok"))
+        })
     }
   }
 
