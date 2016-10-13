@@ -5,21 +5,27 @@ import com.typesafe.config.{Config => TypesafeConfig}
 import org.scalatest.mock.MockitoSugar
 import org.scalatestplus.play.PlaySpec
 import play.api.libs.json.{JsArray, Json}
+import play.api.mvc.Result
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import toguru.app.Config
 import toguru.events.toggles.{GlobalRolloutCreated, ToggleCreated}
+import toguru.helpers.AuthorizationHelpers
 import toguru.toggles.AuditLogActor.GetLog
 
+import scala.concurrent.Future
 import scala.concurrent.duration._
 
 
-class AuditLogControllerSpec extends PlaySpec with MockitoSugar {
+class AuditLogControllerSpec extends PlaySpec with MockitoSugar with AuthorizationHelpers {
 
-  def createController(props: Props): AuditLogController = {
+  val nopActor = Props(new Actor { def receive = { case _ => () } })
+
+  def createController(props: Props = nopActor): AuditLogController = {
     val config = new Config {
       override val actorTimeout = 100.millis
       override val typesafeConfig = mock[TypesafeConfig]
+      override def auth = authConfig
     }
 
     val system = ActorSystem()
@@ -43,11 +49,8 @@ class AuditLogControllerSpec extends PlaySpec with MockitoSugar {
         override def receive = { case GetLog => sender ! events }
       }))
 
-      val request = FakeRequest()
-
-
       // execute
-      val result = controller.get().apply(request)
+      val result = controller.get().apply(authorizedRequest)
 
       // verify
       status(result) mustBe 200
@@ -62,6 +65,14 @@ class AuditLogControllerSpec extends PlaySpec with MockitoSugar {
       (log(1) \ "name").asOpt[String] mustBe Some("toggle 1")
       (log(1) \ "description").asOpt[String] mustBe Some("first toggle")
       (log(1) \ "tags").asOpt[Map[String,String]] mustBe Some(tags)
+    }
+
+    "deny access when not api key given" in {
+      val controller = createController()
+
+      val result: Future[Result] = controller.get().apply(FakeRequest())
+
+      status(result) mustBe 401
     }
   }
 }
