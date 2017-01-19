@@ -21,7 +21,7 @@ import scala.concurrent.duration.{FiniteDuration, _}
 
 
 class ToggleIntegrationSpec extends PlaySpec
-  with BeforeAndAfterAll with Results with PostgresSetup with OneServerPerSuite with FutureAwaits with DefaultAwaitTimeout {
+  with BeforeAndAfterAll with Results with PostgresSetup with OneServerPerSuite with FutureAwaits with DefaultAwaitTimeout with WaitFor {
 
   override def config = app.injector.instanceOf[Config].typesafeConfig
 
@@ -42,6 +42,7 @@ class ToggleIntegrationSpec extends PlaySpec
     val toggleEndpoint        = s"$toggleEndpointURL/$toggleId"
     val toggleStateEndpoint   = s"http://localhost:$port/togglestate"
     val auditLogEndpoint      = s"http://localhost:$port/auditlog"
+    val operationTimeout      = 30.seconds
 
     val wsClient = app.injector.instanceOf[WSClient]
 
@@ -50,10 +51,9 @@ class ToggleIntegrationSpec extends PlaySpec
     def requestWithApiKeyHeader(url: String): WSRequest =
       wsClient.url(url).withHeaders(validTestApiKeyHeader)
 
-    def fetchToggle(): Toggle = {
-      val getResponse = await(requestWithApiKeyHeader(s"$toggleEndpointURL/$toggleId").get)
-      Json.parse(getResponse.body).as(ToggleController.toggleFormat)
-    }
+    def fetchToggleResponse() = await(requestWithApiKeyHeader(s"$toggleEndpointURL/$toggleId").get)
+
+    def fetchToggle(): Toggle = Json.parse(fetchToggleResponse().body).as(ToggleController.toggleFormat)
 
     "deny access if no api key given" in {
       // prepare
@@ -142,7 +142,7 @@ class ToggleIntegrationSpec extends PlaySpec
 
       val actor = app.injector.instanceOf[ActorRef](namedKey(classOf[ActorRef], "toggle-state"))
 
-      waitFor(30) {
+      waitFor(operationTimeout, checkEvery = 1.second) {
         val toggles = await((actor ? GetState).mapTo[Map[_,_]])
         toggles.size == 2
       }
@@ -168,17 +168,19 @@ class ToggleIntegrationSpec extends PlaySpec
 
     "allow to delete a toggle" in {
       // execute
-      val response = await(requestWithApiKeyHeader(toggleEndpoint).withBody("""{"delete": true}""").delete())
+      val response = await(requestWithApiKeyHeader(toggleEndpoint).delete())
 
       // verify
       verifyResponseIsOk(response)
+
+      fetchToggleResponse().status mustBe NOT_FOUND
     }
 
     "return current audit log" in {
       val auditLogSize = 7
       val actor = app.injector.instanceOf[ActorRef](namedKey(classOf[ActorRef], "audit-log"))
 
-      waitFor(30) {
+      waitFor(operationTimeout, checkEvery = 1.second) {
         val log = await((actor ? GetLog).mapTo[Seq[_]])
         log.size == auditLogSize
       }
@@ -193,29 +195,23 @@ class ToggleIntegrationSpec extends PlaySpec
       json mustBe a[JsArray]
       json.asInstanceOf[JsArray].value.size == auditLogSize
     }
+
+    "allow to re-create a deleted toggle" in {
+      // execute
+      val body = toggleAsString(name)
+
+      // execute
+      val createResponse = await(requestWithApiKeyHeader(toggleEndpointURL).post(body))
+
+      // verify
+      verifyResponseIsOk(createResponse)
+
+      fetchToggle() mustBe Toggle(toggleId, name, "toggle description", Map("team" -> "Toguru team"))
+    }
   }
 
   def namedKey[T](clazz: Class[T], name: String): BindingKey[T] =
     new BindingKey(clazz, Some(QualifierInstance(new NamedImpl(name))))
-
-  /**
-    *
-    * @param times how many times we want to try.
-    * @param test returns true if test (finally) succeeded, false if we need to retry
-    */
-  def waitFor(times: Int, wait: FiniteDuration = 1.second)(test: => Boolean): Unit = {
-    val success = (1 to times).exists { i =>
-      if(test) {
-        true
-      } else {
-        if(i < times)
-          Thread.sleep(wait.toMillis)
-        false
-      }
-    }
-
-    success mustBe true
-  }
 
   def verifyResponseIsOk(response: WSResponse): Unit = {
     response.status mustBe OK
