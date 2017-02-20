@@ -1,6 +1,6 @@
 package toguru.toggles
 
-import akka.persistence.journal.{Tagged, WriteEventAdapter}
+import akka.persistence.journal._
 import akka.serialization.SerializerWithStringManifest
 import com.trueaccord.scalapb.GeneratedMessage
 import toguru.toggles.events._
@@ -12,6 +12,8 @@ import toguru.toggles.snapshots.{DeletedToggleSnapshot, ExistingToggleSnapshot}
 trait ToggleEvent extends GeneratedMessage {
   def meta: Option[Metadata]
 }
+
+trait DeprecatedToggleEvent extends ToggleEvent
 
 /**
   * Marker trait for toggle snapshots.
@@ -29,6 +31,11 @@ class ToggleEventProtoBufSerializer extends SerializerWithStringManifest {
   final val CreatedManifest              = classOf[ToggleCreated].getSimpleName
   final val UpdatedManifest              = classOf[ToggleUpdated].getSimpleName
   final val DeletedManifest              = classOf[ToggleDeleted].getSimpleName
+  final val ActivationCreatedManifest    = classOf[ActivationCreated].getSimpleName
+  final val ActivationUpdatedManifest    = classOf[ActivationUpdated].getSimpleName
+  final val ActivationDeletedManifest    = classOf[ActivationDeleted].getSimpleName
+
+  // deprecated events
   final val GlobalRolloutCreateManifest  = classOf[GlobalRolloutCreated].getSimpleName
   final val GlobalRolloutUpdatedManifest = classOf[GlobalRolloutUpdated].getSimpleName
   final val GlobalRolloutDeletedManifest = classOf[GlobalRolloutDeleted].getSimpleName
@@ -39,14 +46,23 @@ class ToggleEventProtoBufSerializer extends SerializerWithStringManifest {
     case CreatedManifest              => ToggleCreated.parseFrom(bytes)
     case UpdatedManifest              => ToggleUpdated.parseFrom(bytes)
     case DeletedManifest              => ToggleDeleted.parseFrom(bytes)
-    case GlobalRolloutCreateManifest  => GlobalRolloutCreated.parseFrom(bytes)
-    case GlobalRolloutUpdatedManifest => GlobalRolloutUpdated.parseFrom(bytes)
-    case GlobalRolloutDeletedManifest => GlobalRolloutDeleted.parseFrom(bytes)
+    case ActivationCreatedManifest    => ActivationCreated.parseFrom(bytes)
+    case ActivationUpdatedManifest    => ActivationUpdated.parseFrom(bytes)
+    case ActivationDeletedManifest    => ActivationDeleted.parseFrom(bytes)
+    case GlobalRolloutCreateManifest  => toActivation(GlobalRolloutCreated.parseFrom(bytes))
+    case GlobalRolloutUpdatedManifest => toActivation(GlobalRolloutUpdated.parseFrom(bytes))
+    case GlobalRolloutDeletedManifest => toActivation(GlobalRolloutDeleted.parseFrom(bytes))
   }
 
   override def toBinary(o: AnyRef): Array[Byte] = o match {
     case e: ToggleEvent => e.toByteArray
   }
+
+  def asRollout(percentage: Int) = Some(Rollout(percentage))
+
+  def toActivation(e: GlobalRolloutCreated) = ActivationCreated(rollout = asRollout(e.percentage), meta = e.meta)
+  def toActivation(e: GlobalRolloutUpdated) = ActivationUpdated(rollout = asRollout(e.percentage), meta = e.meta)
+  def toActivation(e: GlobalRolloutDeleted) = ActivationDeleted(meta = e.meta)
 }
 
 /**

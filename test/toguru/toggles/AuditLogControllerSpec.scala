@@ -2,22 +2,21 @@ package toguru.toggles
 
 import akka.actor.{Actor, ActorSystem, Props}
 import com.typesafe.config.{Config => TypesafeConfig}
-import org.scalatest.mock.MockitoSugar
-import org.scalatestplus.play.PlaySpec
 import play.api.libs.json.{JsArray, Json}
 import play.api.mvc.Result
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import toguru.app.Config
-import toguru.toggles.events.{GlobalRolloutCreated, ToggleCreated}
-import toguru.helpers.AuthorizationHelpers
+import toguru.helpers.ControllerSpec
+import toguru.toggles.AuditLog.Entry
 import toguru.toggles.AuditLogActor.GetLog
+import toguru.toggles.events._
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
 
 
-class AuditLogControllerSpec extends PlaySpec with MockitoSugar with AuthorizationHelpers {
+class AuditLogControllerSpec extends ControllerSpec {
 
   val nopActor = Props(new Actor { def receive = { case _ => () } })
 
@@ -41,10 +40,13 @@ class AuditLogControllerSpec extends PlaySpec with MockitoSugar with Authorizati
       // prepare
       val tags =  Map("team" -> "Toguru team")
       val events = List(
-        AuditLog.Entry("toggle-1", GlobalRolloutCreated(20)),
-        AuditLog.Entry("toggle-1", ToggleCreated("toggle 1", "first toggle", tags))
+        Entry("toggle-1", ActivationCreated(None, 0, Map("country" -> StringSeq(Seq("de-DE", "de-AT"))), Some(Rollout(25)))),
+        Entry("toggle-1", ActivationUpdated(None, 0, rollout = Some(Rollout(20)))),
+        Entry("toggle-1", ToggleCreated("toggle 1", "first toggle", tags))
       )
 
+      implicit val rolloutReads = Json.reads[Rollout]
+      implicit val activationReads = Json.reads[ToggleActivation]
       implicit val reads = Json.reads[ToggleState]
 
       val controller = createController(Props(new Actor() {
@@ -61,12 +63,15 @@ class AuditLogControllerSpec extends PlaySpec with MockitoSugar with Authorizati
       log mustBe a[JsArray]
 
       (log(0) \ "id").asOpt[String] mustBe Some("toggle-1")
-      (log(0) \ "percentage").asOpt[Int] mustBe Some(20)
+      (log(0) \ "rollout" \ "percentage").asOpt[Int] mustBe Some(25)
 
       (log(1) \ "id").asOpt[String] mustBe Some("toggle-1")
-      (log(1) \ "name").asOpt[String] mustBe Some("toggle 1")
-      (log(1) \ "description").asOpt[String] mustBe Some("first toggle")
-      (log(1) \ "tags").asOpt[Map[String,String]] mustBe Some(tags)
+      (log(1) \ "rollout" \ "percentage").asOpt[Int] mustBe Some(20)
+
+      (log(2) \ "id").asOpt[String] mustBe Some("toggle-1")
+      (log(2) \ "name").asOpt[String] mustBe Some("toggle 1")
+      (log(2) \ "description").asOpt[String] mustBe Some("first toggle")
+      (log(2) \ "tags").asOpt[Map[String,String]] mustBe Some(tags)
     }
 
     "deny access when not api key given" in {

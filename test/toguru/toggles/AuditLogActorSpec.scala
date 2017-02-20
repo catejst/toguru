@@ -3,6 +3,7 @@ package toguru.toggles
 import akka.actor.{ActorRef, Props}
 import akka.pattern.ask
 import akka.persistence.query.EventEnvelope
+import toguru.helpers.ActorSpec
 import toguru.toggles.AuditLog.Entry
 import toguru.toggles.AuditLogActor._
 import toguru.toggles.events._
@@ -13,12 +14,17 @@ class AuditLogActorSpec extends ActorSpec {
 
   def meta(time: Long) = Some(Metadata(time, "testUser"))
 
+  def rollout(p: Int) = Some(Rollout(p))
+
   val events = List(
     Entry("toggle-1", ToggleCreated("toggle 1", "first toggle", Map("team" -> "Toguru team"), meta(0))),
     Entry("toggle-1", ToggleUpdated("toggle 1", "very first toggle", Map("team" -> "Toguru team"), meta(10))),
-    Entry("toggle-1", GlobalRolloutCreated(20, meta(20))),
-    Entry("toggle-1", GlobalRolloutUpdated(50, meta(30))),
-    Entry("toggle-1", GlobalRolloutDeleted(meta(40)))
+    Entry("toggle-1", ActivationCreated(meta(20), 0, Map("country" -> StringSeq(Seq("de-DE", "de-AT"))), None)),
+    Entry("toggle-1", ActivationUpdated(meta(30), 0, Map("country" -> StringSeq(Seq("de-DE", "de-AT"))), rollout(34))),
+    Entry("toggle-1", ActivationDeleted(meta(40), 0)),
+    Entry("toggle-1", ActivationCreated(meta(50), 0, rollout = rollout(10))),
+    Entry("toggle-1", ActivationUpdated(meta(60), 0, rollout = rollout(100))),
+    Entry("toggle-1", ActivationDeleted(meta(70), 0))
   )
 
   def createActor(events: Seq[Entry] = List.empty, time: Long = 0, retentionLength: Int = 10, retentionTime: FiniteDuration = 10.seconds): ActorRef =
@@ -66,7 +72,9 @@ class AuditLogActorSpec extends ActorSpec {
 
       val response = await(actor ? GetLog)
 
-      response mustBe events.reverse.take(2)
+      response.asInstanceOf[Seq[_]].length mustBe 5
+
+      response mustBe events.reverse.take(5)
     }
   }
 }
