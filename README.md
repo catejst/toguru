@@ -1,7 +1,7 @@
 # Toguru - トグル
 
-[![Build Status](https://travis-ci.org/Scout24/toguru.svg?branch=master)](https://travis-ci.org/AutoScout24/toguru)
-[![Coverage Status](https://coveralls.io/repos/github/Scout24/toguru/badge.svg?branch=master)](https://coveralls.io/github/AutoScout24/toguru?branch=master)
+[![Build Status](https://travis-ci.org/Scout24/toguru.svg?branch=master)](https://travis-ci.org/Scout24/toguru)
+[![Coverage Status](https://coveralls.io/repos/github/Scout24/toguru/badge.svg?branch=master)](https://coveralls.io/github/Scout24/toguru?branch=master)
 [![Docker Pulls](https://img.shields.io/docker/pulls/as24/toguru.svg)](https://hub.docker.com/r/as24/toguru/)
 
 The toggle guru (Japanese for toggle).
