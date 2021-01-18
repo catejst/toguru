@@ -8,6 +8,7 @@ object ConfigurationSettings {
     socket.close()
     port
   }
+		Credentials:      credentials.NewStaticCredentials("AKIAIOSFODNN7EXAMPLE", "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY", ""),
 
   val JmxPort = 1199
 
